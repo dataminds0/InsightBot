@@ -1,0 +1,33 @@
+# =================== Web Scraping ===================
+beautifulsoup4       # For parsing HTML pages
+requests             # For making HTTP requests
+urllib3              # Retry mechanism for requests
+lxml                 # Optional parser for faster HTML/XML parsing
+
+# =================== Data Handling ===================
+pandas               # Data manipulation and storage
+
+# =================== NLP & Summarization ===================
+sumy                 # Text summarization (LSA, etc.)
+sentence-transformers # Sentence embeddings for semantic similarity
+transformers         # HuggingFace models for classification, summarization
+langdetect           # Language detection
+
+# =================== Interface ===================
+streamlit
+plotly
+
+# =================== Database ===================
+pymongo              # MongoDB integration
+
+# =================== Utilities ===================
+nltk                 # Tokenization and NLP utilities
+
+# =================== Models to Download ===================
+# SentenceTransformer model: 'all-MiniLM-L6-v2'
+# Transformers model (classification): 'typeform/distilbert-base-uncased-mnli'
+# Sentiment model: 'cardiffnlp/twitter-xlm-roberta-base-sentiment'
+# Summarization model: 'sshleifer/distilbart-cnn-12-6'
+
+# =================== Dashboard ===================
+# power_Bi Version: 2.146.1454.0 64-bit
