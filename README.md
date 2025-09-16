@@ -190,7 +190,7 @@ Open in browser: [http://localhost:8501](http://localhost:8501)
 
 Collections:
 
-* *users* → username, email, password_hash, role, is_approved, join_date, time_spent_minutes 
+* *users* → username, email, password_hash, role, is_approved, join_date, time_spent_minutes
 * *logs* → ts, user, event, meta
 * *articles* → id, title, content, source, language, context, sentiment, url, fetched_at, t_total_sec
 * *app_store* → key, value
