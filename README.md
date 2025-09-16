@@ -62,7 +62,7 @@ Main workflow:
 * 🎨 Streamlit-based interactive interface (admin & user roles)
 * 📈 Power BI dashboards for advanced reporting
 * 🔐 Secure authentication (login/register)
-* ⚙ Workflow orchestration with *Prefect*
+* ⚙ Workflow orchestration with *Perfect*
 
 ---
 
@@ -73,7 +73,7 @@ Main workflow:
 * *Database* → MongoDB
 * *Frontend* → Streamlit
 * *Visualization* → Power BI
-* *Orchestration* → Prefect
+* *Orchestration* → Perfect
 
 ---
 
@@ -158,21 +158,21 @@ python seed_data.py
 
 ---
 
-## ⚡ Prefect Pipeline
+## ⚡ Perfect Pipeline
 
-1. Start Prefect server (optional for orchestration UI):
+1. Start Perfect server (optional for orchestration UI):
 
 ```bash
-prefect server start
+Perfect server start
 ```
 
-2. Run the Prefect flow to orchestrate scraping and processing:
+2. Run the Perfect flow to orchestrate scraping and processing:
 
 ```bash
 python flows/pipeline.py
 ```
 
-3. Monitor and manage pipeline runs via Prefect UI at [http://localhost:4200](http://localhost:4200).
+3. Monitor and manage pipeline runs via Perfect UI at [http://localhost:4200](http://localhost:4200).
 
 ---
 
@@ -190,10 +190,10 @@ Open in browser: [http://localhost:8501](http://localhost:8501)
 
 Collections:
 
-* *users* → username, email, password\_hash, role, is\_approved, join\_date, time\_spent\_minutes
+* *users* → username, email, password_hash, role, is_approved, join_date
 * *logs* → ts, user, event, meta
-* *articles* → id, title, content, source, language, context, sentiment, url, fetched\_at, t\_total\_sec
-* *app\_store* → key, value
+* *articles* → id, title, content, source, language, context, sentiment, url, fetched_at, t_total_sec
+* *app_store* → key, value
 
 Indexes are defined in `init_schema.py`.
 
@@ -246,7 +246,7 @@ Indexes are defined in `init_schema.py`.
 
   * Username: admin
   * Password: admin123
-* *App store defaults*: last\_page = dashboard, app\_version = 1.0.0
+* *App store defaults*: last_page = dashboard, app_version = 1.0.0
 
 ---
 
