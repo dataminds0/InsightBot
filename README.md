@@ -127,7 +127,7 @@ python seed_data.py
   --db insightbot `
   --collection articles `
   --type csv `
-  --file "C:\Users\moham\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
+  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
   --headerline
 ```
 
@@ -138,7 +138,7 @@ python seed_data.py
   --db insightbot `
   --collection articles `
   --type csv `
-  --file "C:\Users\moham\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
+  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
   --headerline `
   --upsert `
   --upsertFields id
@@ -151,28 +151,28 @@ python seed_data.py
   --db insightbot `
   --collection articles `
   --type csv `
-  --file "C:\Users\moham\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
+  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
   --headerline `
   --drop
 ```
 
 ---
 
-## ⚡ Perfect Pipeline
+## ⚡ Prefect Pipeline
 
-1. Start Perfect server (optional for orchestration UI):
+1. Start Prefect server (optional for orchestration UI):
 
 ```bash
 Perfect server start
 ```
 
-2. Run the Perfect flow to orchestrate scraping and processing:
+2. Run the Prefect flow to orchestrate scraping and processing:
 
 ```bash
 python flows/pipeline.py
 ```
 
-3. Monitor and manage pipeline runs via Perfect UI at [http://localhost:4200](http://localhost:4200).
+3. Monitor and manage pipeline runs via Prefect UI at [http://localhost:4200](http://localhost:4200).
 
 ---
 
