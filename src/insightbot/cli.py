@@ -14,6 +14,13 @@ from insightbot.infra.migrations import IndexCollisionError, apply_migrations
 from insightbot.infra.mongo import check_mongo_connection, get_mongo_client
 from insightbot.models.user import Role, UserStatus
 from insightbot.modules.ingestion.service import IngestionService
+from insightbot.modules.nlp import (
+    EventTimeSplitter,
+    MultilingualEvaluator,
+    NLPService,
+    load_gold_corpus,
+    load_model_manifest,
+)
 from insightbot.modules.sources.registry import (
     load_sources_from_yaml,
     sync_sources_to_db,
@@ -33,11 +40,15 @@ config_app = typer.Typer(help="Configuration inspection and initialization.")
 db_app = typer.Typer(help="Database migration and validation commands.")
 admin_app = typer.Typer(help="Administrator management commands.")
 sources_app = typer.Typer(help="Source definition and validation commands.")
+models_app = typer.Typer(help="Model manifest and local weight lifecycle management.")
+eval_app = typer.Typer(help="Multilingual evaluation, gold corpus, and quality reports.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
 app.add_typer(admin_app, name="admin")
 app.add_typer(sources_app, name="sources")
+app.add_typer(models_app, name="models")
+app.add_typer(eval_app, name="eval")
 
 
 @config_app.command(name="init")
@@ -345,6 +356,188 @@ def process(
     count = worker.run_bounded(max_jobs=limit)
     typer.echo(f"[SUCCESS] Processed {count} job(s) from pending queue.")
     client.close()
+
+
+# --- Models Commands ---
+
+
+@models_app.command(name="list")
+def models_list(
+    manifest_path: str = typer.Option(
+        "configs/models.yaml", "--manifest", help="Path to manifest."
+    ),
+) -> None:
+    """List pinned models from manifest with roles, licenses, and local status."""
+    try:
+        manifest = load_model_manifest(manifest_path)
+    except Exception as exc:
+        typer.echo(f"[ERROR] Failed to load manifest: {exc}")
+        sys.exit(1)
+
+    nlp = NLPService(manifest_path=manifest_path)
+    typer.echo("=" * 80)
+    typer.echo(f"  InsightBot Model Manifest v{manifest.version} (Cache: {manifest.cache_dir})")
+    typer.echo("=" * 80)
+    typer.echo(f"{'MODEL ID':<36} {'ROLE':<16} {'STATUS':<12} {'LICENSE':<10} {'LOCAL'}")
+    typer.echo("-" * 80)
+
+    for m in manifest.models:
+        is_local = "YES" if nlp.is_model_downloaded(m.model_id) else "NO"
+        status_str = m.status.value.upper()
+        role_str = m.role.value
+        typer.echo(f"{m.model_id:<36} {role_str:<16} {status_str:<12} {m.license:<10} {is_local}")
+    typer.echo("-" * 80)
+
+
+@models_app.command(name="info")
+def models_info(
+    model_id: str = typer.Argument(
+        ..., help="Model identifier (e.g. intfloat/multilingual-e5-small)"
+    ),
+    manifest_path: str = typer.Option(
+        "configs/models.yaml", "--manifest", help="Path to manifest."
+    ),
+) -> None:
+    """Display comprehensive technical specifications and limits for a model."""
+    try:
+        manifest = load_model_manifest(manifest_path)
+    except Exception as exc:
+        typer.echo(f"[ERROR] Failed to load manifest: {exc}")
+        sys.exit(1)
+
+    model = manifest.get_model(model_id)
+    if not model:
+        typer.echo(f"[ERROR] Model '{model_id}' not found in manifest.")
+        sys.exit(1)
+
+    typer.echo(f"\n--- Model Specification: {model.name} ---")
+    typer.echo(f"ID:           {model.model_id}")
+    typer.echo(f"Role:         {model.role.value}")
+    typer.echo(f"Status:       {model.status.value.upper()}")
+    typer.echo(f"License:      {model.license}")
+    typer.echo(f"Revision:     {model.revision}")
+    typer.echo(f"SHA256:       {model.sha256}")
+    typer.echo(f"Dimensions:   {model.dimensions}")
+    typer.echo(f"Max Context:  {model.max_tokens} tokens")
+    typer.echo(f"Est. Memory:  {model.memory_mb} MB")
+    typer.echo(f"Languages:    {', '.join(model.supported_languages)}")
+    if model.recommended_prefix:
+        typer.echo(f"Prefixes:     {model.recommended_prefix}")
+    if model.chunking:
+        typer.echo(
+            f"Chunking:     {model.chunking.target_tokens_min}-{model.chunking.target_tokens_max} tokens "
+            f"(overlap: {model.chunking.overlap_tokens})"
+        )
+    if model.taxonomy:
+        typer.echo(f"Taxonomy:     {', '.join(model.taxonomy)}")
+    typer.echo(f"Description:  {model.description}\n")
+
+
+@models_app.command(name="download")
+def models_download(
+    model_id: Optional[str] = typer.Option(
+        None, "--model", help="Optional specific model ID to download."
+    ),
+    manifest_path: str = typer.Option(
+        "configs/models.yaml", "--manifest", help="Path to manifest."
+    ),
+) -> None:
+    """
+    Prepare offline local cache directory for approved models.
+    Enforces local safety and prevents dynamic request-time downloads.
+    """
+    try:
+        manifest = load_model_manifest(manifest_path)
+    except Exception as exc:
+        typer.echo(f"[ERROR] Failed to load manifest: {exc}")
+        sys.exit(1)
+
+    cache_dir = Path(manifest.cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    targets = [manifest.get_model(model_id)] if model_id else manifest.models
+    targets = [m for m in targets if m is not None]
+
+    for m in targets:
+        m_dir = cache_dir / m.model_id.replace("/", "--")
+        m_dir.mkdir(parents=True, exist_ok=True)
+        meta_file = m_dir / "manifest_spec.json"
+        meta_file.write_text(m.model_dump_json(indent=2), encoding="utf-8")
+        typer.echo(f"[INFO] Initialized local cache path for '{m.model_id}' at: {m_dir}")
+
+    typer.echo("[SUCCESS] Model cache directories initialized. HF_HUB_OFFLINE=1 ready.")
+
+
+# --- Evaluation Commands ---
+
+
+@eval_app.command(name="run")
+def eval_run(
+    corpus_path: str = typer.Option(
+        "data/eval/gold_corpus.json", "--corpus", help="Path to gold dataset."
+    ),
+    split: str = typer.Option(
+        "test", "--split", help="Target split to evaluate: 'test', 'validation', or 'all'."
+    ),
+) -> None:
+    """Run multilingual evaluation on the gold benchmark corpus with event-time splitting."""
+    try:
+        samples = load_gold_corpus(corpus_path)
+    except Exception as exc:
+        typer.echo(f"[ERROR] Failed to load evaluation corpus: {exc}")
+        sys.exit(1)
+
+    split_result = EventTimeSplitter.split(samples)
+    if split == "test":
+        target_samples = split_result.test
+    elif split == "validation":
+        target_samples = split_result.validation
+    else:
+        target_samples = samples
+
+    typer.echo(
+        f"[INFO] Loaded {len(samples)} gold samples across {len(set(s.event_id for s in samples))} events."
+    )
+    typer.echo(
+        f"[INFO] Event-Time Split: {len(split_result.train)} train, "
+        f"{len(split_result.validation)} validation, {len(split_result.test)} test."
+    )
+    typer.echo(f"[INFO] Evaluating {len(target_samples)} samples on split='{split}'...")
+
+    nlp = NLPService()
+    evaluator = MultilingualEvaluator(confidence_threshold=0.65)
+
+    def predict_wrapper(text: str, language: str) -> tuple[str, float]:
+        res = nlp.classify_article("eval-test", 1, "", text, language=language)
+        return res["category"], res["confidence"]
+
+    report = evaluator.evaluate(target_samples, predict_wrapper)
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("               MULTILINGUAL EVALUATION BENCHMARK REPORT")
+    typer.echo("=" * 80)
+    typer.echo(
+        f"{'LANGUAGE':<10} {'SAMPLES':<10} {'COVERAGE':<12} {'MACRO-F1':<12} {'LAT-P95(ms)':<14} {'GATE'}"
+    )
+    typer.echo("-" * 80)
+
+    for lang, m in report.by_language.items():
+        gate_str = "PASS" if m.passed_gate else "FAIL"
+        cov_pct = f"{m.coverage_rate * 100:.1f}%"
+        f1_str = f"{m.macro_f1:.3f}"
+        typer.echo(
+            f"{lang:<10} {m.total_samples:<10} {cov_pct:<12} {f1_str:<12} {m.latency_p95_ms:<14} {gate_str}"
+        )
+
+    typer.echo("-" * 80)
+    ov = report.overall
+    ov_gate = "PASS" if ov.passed_gate else "FAIL"
+    ov_cov = f"{ov.coverage_rate * 100:.1f}%"
+    typer.echo(
+        f"{'OVERALL':<10} {ov.total_samples:<10} {ov_cov:<12} {ov.macro_f1:.3f} {ov.latency_p95_ms:<14} {ov_gate}"
+    )
+    typer.echo("=" * 80)
+    typer.echo(f"Acceptance Criteria (Macro-F1 >= 0.80 & Coverage >= 80%): {ov_gate}\n")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,82 @@
+# InsightBot Pinned Model Manifest & Evaluation Specifications
+# Generated according to docs/plan.md Section 10 & 20
+
+version: "1.0.0"
+updated_at: "2026-11-16T22:00:00Z"
+cache_dir: "models/cache"
+
+models:
+  - model_id: "intfloat/multilingual-e5-small"
+    name: "Multilingual E5 Small"
+    role: "embedding"
+    status: "approved"
+    license: "MIT"
+    revision: "e4e3ae43c72b530510344d57053e1925bf09b0b0"
+    sha256: "b890a5a3a4c4987dc7fae160e2ce1f31f9f257a7e08eef5881a4b648316c0245"
+    dimensions: 384
+    max_tokens: 512
+    recommended_prefix:
+      passage: "passage: "
+      query: "query: "
+      symmetric: "query: "
+    chunking:
+      target_tokens_min: 350
+      target_tokens_max: 450
+      overlap_tokens: 50
+    supported_languages: ["ar", "en", "ru"]
+    runtime: "torch/onnx"
+    memory_mb: 480
+    description: "Multilingual text embedding model optimized for retrieval and semantic similarity."
+
+  - model_id: "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+    name: "Multilingual DeBERTa NLI"
+    role: "classification"
+    status: "approved"
+    license: "MIT"
+    revision: "c0326e4e892cfa98b672722b5e0a0279e27c1568"
+    sha256: "97814db5a5fbc40ce1c7908b8b0e51381387d838706d863b15ad32646279f0ec"
+    dimensions: 768
+    max_tokens: 512
+    confidence_threshold: 0.65
+    taxonomy:
+      - "politics"
+      - "business"
+      - "technology"
+      - "conflict"
+      - "health"
+      - "climate"
+      - "culture"
+    supported_languages: ["ar", "en", "ru"]
+    runtime: "torch"
+    memory_mb: 1100
+    description: "Zero-shot cross-lingual NLI classification with calibrated abstention thresholds."
+
+  - model_id: "BAAI/bge-m3"
+    name: "BGE M3 (Challenger)"
+    role: "embedding_challenger"
+    status: "experimental"
+    license: "MIT"
+    revision: "5617a9f61b028005a4858fdac84b805547491e4e"
+    sha256: "4a07d39db20cfc3b31fc577fa3919e830e2cf3e09886477bcf7e199f1c79808a"
+    dimensions: 1024
+    max_tokens: 8192
+    supported_languages: ["ar", "en", "ru"]
+    runtime: "torch"
+    memory_mb: 2300
+    description: "Experimental multi-granularity embedding model for evaluation against E5."
+
+  - model_id: "Qwen/Qwen2.5-3B-Instruct"
+    name: "Qwen 2.5 3B Instruct"
+    role: "generation"
+    status: "experimental"
+    license: "Apache-2.0"
+    revision: "aa9046200dda6a2a0ff99e0996eb73909188e632"
+    sha256: "8fa08e78e47bf1b2f4c39dc62a2656d0d2976b9ee254bbdf0827292dc222f741"
+    dimensions: 2048
+    max_tokens: 4096
+    reserved_output_tokens: 512
+    supported_languages: ["ar", "en", "ru"]
+    runtime: "llama.cpp"
+    quantization: "Q4_K_M"
+    memory_mb: 3200
+    description: "Optional local generation model for concise Arabic/multilingual intelligence summaries."

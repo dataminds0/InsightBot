@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "description": "InsightBot Multilingual Evaluation Gold Corpus with Event-Time Ground Truth",
+  "license": "Evaluation Benchmark - CC-BY-SA 4.0",
+  "samples": [
+    {
+      "article_id": "eval-ar-01",
+      "event_id": "event-gaza-2026-11",
+      "event_time": "2026-11-01T08:00:00Z",
+      "language": "ar",
+      "title": "مفاوضات وقف إطلاق النار: جهود دبلوماسية مكثفة في القاهرة",
+      "text": "تواصلت في العاصمة المصرية القاهرة جولة جديدة من المحادثات الدبلوماسية الرامية إلى التوصل لاتفاق هدنة وتبادل للأسرى في قطاع غزة وسط تفاؤل حذر.",
+      "true_category": "conflict"
+    },
+    {
+      "article_id": "eval-ar-02",
+      "event_id": "event-gaza-2026-11",
+      "event_time": "2026-11-01T12:00:00Z",
+      "language": "ar",
+      "title": "الأمم المتحدة تحذر من تفاقم الوضع الإنساني مع استمرار القصف",
+      "text": "أطلقت وكالات الإغاثة الدولية تحذيرات عاجلة حول نقص الإمدادات الطبية والغذائية في المستشفيات مع تعثر وصول المساعدات الإنسانية إلى السكان.",
+      "true_category": "conflict"
+    },
+    {
+      "article_id": "eval-ar-03",
+      "event_id": "event-opec-2026-11",
+      "event_time": "2026-11-03T10:00:00Z",
+      "language": "ar",
+      "title": "أوبك+ تقرر الإبقاء على مستويات الإنتاج الحالية لدعم استقرار أسواق النفط",
+      "text": "أعلنت منظمة الدول المصدرة للنفط وحلفاؤها في اجتماع وزاري الحفاظ على سياسة الإمدادات النفطية دون تغيير وسط مراقبة المؤشرات الاقتصادية العالمية.",
+      "true_category": "business"
+    },
+    {
+      "article_id": "eval-ar-04",
+      "event_id": "event-cop-2026-11",
+      "event_time": "2026-11-05T09:00:00Z",
+      "language": "ar",
+      "title": "قمة المناخ تختتم أعمالها باتفاق تمويل تاريخي للدول النامية",
+      "text": "أقرت وفود الدول المشاركة في مؤتمر المناخ آلية تمويلية جديدة لتعويض الخسائر والأضرار الناجمة عن التغير المناخي والفيضانات وموجات الجفاف.",
+      "true_category": "climate"
+    },
+    {
+      "article_id": "eval-ar-05",
+      "event_id": "event-tech-ai-2026-11",
+      "event_time": "2026-11-07T14:00:00Z",
+      "language": "ar",
+      "title": "إطلاق منصة ذكاء اصطناعي مفتوحة المصدر تدعم معالجة اللغة العربية",
+      "text": "أعلن باحثون عرب إطلاق نموذج لغوي جديد ومستودع مفتوح المصدر مصمم خصيصاً لفهم اللهجات العربية وتوليد النصوص الدقيقة مع خوادم محلية.",
+      "true_category": "technology"
+    },
+    {
+      "article_id": "eval-ar-06",
+      "event_id": "event-election-us-2026-11",
+      "event_time": "2026-11-09T18:00:00Z",
+      "language": "ar",
+      "title": "الانتخابات النصفية الأمريكية: صراع محتدم على الأغلبية في الكونغرس",
+      "text": "يتوجه الناخبون الأمريكيون إلى صناديق الاقتراع للإدلاء بأصواتهم في انتخابات التجديد النصفي وسط تركيز كبير على قضايا التضخم والاقتصاد.",
+      "true_category": "politics"
+    },
+    {
+      "article_id": "eval-ar-07",
+      "event_id": "event-health-who-2026-11",
+      "event_time": "2026-11-11T11:00:00Z",
+      "language": "ar",
+      "title": "منظمة الصحة العالمية تعتمد لقاحاً جديداً لمكافحة حمى الضنك",
+      "text": "منحت منظمة الصحة العالمية ترخيص الاستخدام الطارئ للقاح جديد يوفر حماية واسعة ضد سلالات فيروس حمى الضنك المتفشية في المناطق الاستوائية.",
+      "true_category": "health"
+    },
+    {
+      "article_id": "eval-ar-08",
+      "event_id": "event-culture-cairo-2026-11",
+      "event_time": "2026-11-13T16:00:00Z",
+      "language": "ar",
+      "title": "افتتاح مهرجان القاهرة السينمائي الدولي بمشاركة أفلام عالمية",
+      "text": "انطلقت فعاليات الدورة الجديدة لمهرجان القاهرة بمشاركة أكثر من مئة فيلم من ثلاثين دولة وتكريم شخصيات فنية رائدة في صناعة السينما.",
+      "true_category": "culture"
+    },
+    {
+      "article_id": "eval-en-01",
+      "event_id": "event-gaza-2026-11",
+      "event_time": "2026-11-01T09:30:00Z",
+      "language": "en",
+      "title": "Ceasefire Talks Progress in Cairo Amid Cautious Regional Optimism",
+      "text": "Diplomats and international mediators in Cairo reported modest progress in hostage exchange and truce discussions regarding the ongoing Gaza conflict.",
+      "true_category": "conflict"
+    },
+    {
+      "article_id": "eval-en-02",
+      "event_id": "event-opec-2026-11",
+      "event_time": "2026-11-03T11:30:00Z",
+      "language": "en",
+      "title": "OPEC+ Maintains Oil Production Strategy Amid Mixed Economic Indicators",
+      "text": "Energy ministers reaffirmed current crude extraction quotas, aiming to preserve stability in global energy markets despite demand uncertainty.",
+      "true_category": "business"
+    },
+    {
+      "article_id": "eval-en-03",
+      "event_id": "event-cop-2026-11",
+      "event_time": "2026-11-05T10:15:00Z",
+      "language": "en",
+      "title": "Global Climate Summit Adopts Groundbreaking Loss and Damage Framework",
+      "text": "Delegates reached a landmark financial consensus to assist vulnerable developing nations facing severe weather catastrophes and rising seas.",
+      "true_category": "climate"
+    },
+    {
+      "article_id": "eval-en-04",
+      "event_id": "event-tech-ai-2026-11",
+      "event_time": "2026-11-07T15:00:00Z",
+      "language": "en",
+      "title": "Open Source Multilingual LLM Architecture Released for Local Inference",
+      "text": "Researchers introduced an efficient quantized neural network architecture running entirely on self-hosted commodity hardware without external APIs.",
+      "true_category": "technology"
+    },
+    {
+      "article_id": "eval-en-05",
+      "event_id": "event-election-us-2026-11",
+      "event_time": "2026-11-09T20:00:00Z",
+      "language": "en",
+      "title": "Key Battleground Races Shape Congressional Balance of Power in Midterms",
+      "text": "Voter turnout reached record numbers in pivotal swing districts as campaigns debated inflation, judicial appointments, and federal expenditure.",
+      "true_category": "politics"
+    },
+    {
+      "article_id": "eval-en-06",
+      "event_id": "event-health-who-2026-11",
+      "event_time": "2026-11-11T12:00:00Z",
+      "language": "en",
+      "title": "WHO Approves Novel Vaccine for Tropical Dengue Fever Prevention",
+      "text": "Health authorities endorsed widespread immunization with the latest vaccine, demonstrating over eighty percent efficacy in Phase 3 trials.",
+      "true_category": "health"
+    },
+    {
+      "article_id": "eval-en-07",
+      "event_id": "event-culture-cairo-2026-11",
+      "event_time": "2026-11-13T18:00:00Z",
+      "language": "en",
+      "title": "International Film Festival Opens with Celebrated Arab and Global Premieres",
+      "text": "Cinematic directors and artists gathered for the opening gala, highlighting independent storytelling, documentary works, and cinematic heritage.",
+      "true_category": "culture"
+    },
+    {
+      "article_id": "eval-ru-01",
+      "event_id": "event-gaza-2026-11",
+      "event_time": "2026-11-01T14:00:00Z",
+      "language": "ru",
+      "title": "Переговоры о перемирии в Газе продолжаются в Каире при участии посредников",
+      "text": "Дипломатические делегации ведут консультации по согласованию условий прекращения огня и гуманитарных коридоров в секторе Газа.",
+      "true_category": "conflict"
+    },
+    {
+      "article_id": "eval-ru-02",
+      "event_id": "event-opec-2026-11",
+      "event_time": "2026-11-03T13:00:00Z",
+      "language": "ru",
+      "title": "ОПЕК+ сохранила действующие квоты на добычу нефти для балансировки рынка",
+      "text": "Министры стран альянса приняли решение не менять параметры сделки по добыче углеводородов до следующей министерской встречи.",
+      "true_category": "business"
+    },
+    {
+      "article_id": "eval-ru-03",
+      "event_id": "event-cop-2026-11",
+      "event_time": "2026-11-05T12:00:00Z",
+      "language": "ru",
+      "title": "Климатическая конференция согласовала механизмы экологического финансирования",
+      "text": "Участники экологического саммита одобрили резолюцию о поддержке программ адаптации к изменению климата и сокращению выбросов.",
+      "true_category": "climate"
+    },
+    {
+      "article_id": "eval-ru-04",
+      "event_id": "event-tech-ai-2026-11",
+      "event_time": "2026-11-07T16:00:00Z",
+      "language": "ru",
+      "title": "Разработана новая открытая нейросетевая модель для локального анализа данных",
+      "text": "Специалисты представили алгоритм обработки естественного языка, способный эффективно функционировать на серверах без облачных сервисов.",
+      "true_category": "technology"
+    },
+    {
+      "article_id": "eval-ru-05",
+      "event_id": "event-election-us-2026-11",
+      "event_time": "2026-11-09T22:00:00Z",
+      "language": "ru",
+      "title": "В США завершилось голосование на промежуточных парламентских выборах",
+      "text": "Избирательные участки закрылись в большинстве штатов, начался подсчет голосов за кандидатов в Палату представителей и Сенат.",
+      "true_category": "politics"
+    },
+    {
+      "article_id": "eval-ru-06",
+      "event_id": "event-health-who-2026-11",
+      "event_time": "2026-11-11T14:30:00Z",
+      "language": "ru",
+      "title": "ВОЗ одобрила применение нового препарата для профилактики вирусных инфекций",
+      "text": "Всемирная организация здравоохранения опубликовала рекомендации по применению вакцины в регионах с повышенным эпидемиологическим риском.",
+      "true_category": "health"
+    },
+    {
+      "article_id": "eval-ru-07",
+      "event_id": "event-culture-cairo-2026-11",
+      "event_time": "2026-11-13T19:00:00Z",
+      "language": "ru",
+      "title": "Международный кинофестиваль представил программу авторских картин",
+      "text": "В конкурсной программе представлены художественные и документальные ленты кинематографистов Европы, Ближнего Востока и Азии.",
+      "true_category": "culture"
+    }
+  ]
+}
