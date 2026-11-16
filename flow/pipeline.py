@@ -34,4 +34,5 @@ def daily_pipeline():
     print("✅ Pipeline Finished Successfully!")
 
 
-daily_pipeline()
+if __name__ == "__main__":
+    daily_pipeline()

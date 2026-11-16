@@ -1,0 +1,116 @@
+# ==============================================================================
+# InsightBot Approved Publisher Sources Registry
+#
+# Rules:
+# - All sources are DISABLED by default (enabled: false) until human policy review.
+# - Only approved real news publishers are registered.
+# - Rate limits and retention policies are enforced per publisher.
+# ==============================================================================
+
+sources:
+  # --- Arabic Publishers (4) ---
+  - source_id: "aljazeera_ar"
+    name: "Al Jazeera Arabic"
+    url: "https://www.aljazeera.net"
+    feed_urls:
+      - "https://www.aljazeera.net/aljazeerarss/a7c6e2fb-b792-46b5-8e47-01132f738ef8/108a9283-04e4-42ec-a349-1b980e14c009"
+    language: "ar"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_arabic"
+
+  - source_id: "bbc_ar"
+    name: "BBC News Arabic"
+    url: "https://www.bbc.com/arabic"
+    feed_urls:
+      - "https://feeds.bbci.co.uk/arabic/rss.xml"
+    language: "ar"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_arabic"
+
+  - source_id: "alarabiya_ar"
+    name: "Al Arabiya"
+    url: "https://www.alarabiya.net"
+    feed_urls:
+      - "https://www.alarabiya.net/.mrss/ar/all.xml"
+    language: "ar"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_arabic"
+
+  - source_id: "skynews_ar"
+    name: "Sky News Arabia"
+    url: "https://www.skynewsarabia.com"
+    feed_urls:
+      - "https://www.skynewsarabia.com/rss.xml"
+    language: "ar"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_arabic"
+
+  # --- English Publishers (3) ---
+  - source_id: "bbc_en"
+    name: "BBC News World"
+    url: "https://www.bbc.com/news"
+    feed_urls:
+      - "https://feeds.bbci.co.uk/news/world/rss.xml"
+    language: "en"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_english"
+
+  - source_id: "reuters_en"
+    name: "Reuters World News"
+    url: "https://www.reuters.com"
+    feed_urls:
+      - "https://www.reutersagency.com/feed/?taxonomy=best-sectors&post_type=best"
+    language: "en"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 15
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_english"
+
+  - source_id: "guardian_en"
+    name: "The Guardian World"
+    url: "https://www.theguardian.com"
+    feed_urls:
+      - "https://www.theguardian.com/world/rss"
+    language: "en"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 20
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_english"
+
+  # --- Russian Publisher (1) ---
+  - source_id: "tass_ru"
+    name: "TASS News Agency"
+    url: "https://tass.com"
+    feed_urls:
+      - "https://tass.com/rss/v2.xml"
+    language: "ru"
+    enabled: false
+    policy:
+      rate_limit_per_minute: 15
+      retention_days: 90
+      allow_raw_storage: true
+      owner: "editorial_russian"

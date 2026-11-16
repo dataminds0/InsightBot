@@ -17,6 +17,7 @@ Automated News Analytics & Visualization System
 * [Features](#features)
 * [Tech Stack](#tech-stack)
 * [Getting Started](#getting-started)
+* [Development Plan](./docs/plan.md)
 * [Usage](#usage)
 * [Screenshots](#screenshots)
 * [License](#license)
@@ -102,59 +103,17 @@ pip install -r requirements.txt
 
 ---
 
-## 🗄 MongoDB Setup
+## MongoDB Setup and Real Article Data
 
-1. Start your MongoDB service.
+Start a local MongoDB instance. Demo article and fixed-administrator seeding have been removed. Application news must come from approved real publishers with source URLs and collection timestamps.
 
-2. Run initialization script:
+The legacy schema script is `Interface/insightbot_seed/init_schema.py`. Review it before use on a disposable development database: it drops the legacy `user_preferences` collection and can weaken unique indexes on collisions. Safe replacement migrations are planned in T02.
 
-```bash
-python init_schema.py
-```
+Real collection starts in `scripts/web_scraping.py`, followed by the existing processing notebooks. This legacy path needs the repairs recorded in the plan before it is reliable: the flow references a missing exporter, notebook paths/contracts need alignment, and full text must be preserved. Live collection requires network access and source-policy review. Missing or failed collection should show an empty/error state.
 
-3. Seed default data:
+There is currently no replacement administrator bootstrap command. Until T03 provides interactive account creation, deployment requires a separately provisioned approved administrator. Removing seed files does not revoke accounts or delete articles already in a database.
 
-```bash
-python seed_data.py
-```
-
-4. Import sample articles.csv (optional — choose one method below):
-
-### ▶ Regular Import (simple add)
-
-```powershell
-& "C:\Program Files\MongoDB\tools\bin\mongoimport.exe" `
-  --db insightbot `
-  --collection articles `
-  --type csv `
-  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
-  --headerline
-```
-
-### ▶ Re-import / Update Without Duplicates
-
-```powershell
-& "C:\Program Files\MongoDB\tools\bin\mongoimport.exe" `
-  --db insightbot `
-  --collection articles `
-  --type csv `
-  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
-  --headerline `
-  --upsert `
-  --upsertFields id
-```
-
-### ▶ Full Reset Import (Clean Slate)
-
-```powershell
-& "C:\Program Files\MongoDB\tools\bin\mongoimport.exe" `
-  --db insightbot `
-  --collection articles `
-  --type csv `
-  --file "C:\Users\USER_NAME\Desktop\Insightbot\Interface\insightbot_seed\news_articles.csv" `
-  --headerline `
-  --drop
-```
+See the [development and implementation plan](./docs/plan.md) for FastAPI/React migration, real-source ingestion, safe account setup, and verification gates. Its target commands are not implemented yet.
 
 ---
 
@@ -169,7 +128,7 @@ Perfect server start
 2. Run the Perfect flow to orchestrate scraping and processing:
 
 ```bash
-python flows/pipeline.py
+python flow/pipeline.py
 ```
 
 3. Monitor and manage pipeline runs via Perfect UI at [http://localhost:4200](http://localhost:4200).
@@ -179,7 +138,7 @@ python flows/pipeline.py
 ## ▶ Running the Application
 
 ```bash
-streamlit run app.py
+streamlit run Interface/app.py
 ```
 
 Open in browser: [http://localhost:8501](http://localhost:8501)
@@ -195,7 +154,7 @@ Collections:
 * *articles* → id, title, content, source, language, context, sentiment, url, fetched_at, t_total_sec
 * *app_store* → key, value
 
-Indexes are defined in `init_schema.py`.
+Legacy indexes are defined in `Interface/insightbot_seed/init_schema.py`; see the setup caveats above.
 
 ---
 
@@ -237,16 +196,6 @@ Indexes are defined in `init_schema.py`.
 
 * *User Dashboard*: articles over time, top sources, sentiment distribution, heatmap
 * *Admin Panel*: activity trend, reads by context, articles per hour, top users
-
----
-
-## 🌱 Default Data & Seeding
-
-* *Admin user*:
-
-  * Username: admin
-  * Password: admin123
-* *App store defaults*: last_page = dashboard, app_version = 1.0.0
 
 ---
 
