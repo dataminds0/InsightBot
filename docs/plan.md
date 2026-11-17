@@ -472,10 +472,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1; Full-stack; depends T07/T10; event features T14.**
 
-- [ ] Metric/filter/date contracts, ECharts/tables/coverage/freshness, bounded expiring owner export jobs/manifests.
-- [ ] Source policy and CSV formula protection.
+- [x] Metric/filter/date contracts, ECharts/tables/coverage/freshness, bounded expiring owner export jobs/manifests.
+- [x] Source policy and CSV formula protection.
 
 **Accept:** UI/export agree within defined snapshot and forbidden text cannot leak.
+- Comprehensive Verification: Aggregated analytics engine (`AnalyticsService`) in `src/insightbot/modules/analytics/service.py` reconciling underlying articles, sources, stories, Defect A13 unknown publication date counts, and source publishing lag. Bounded data export engine (`ExportService`) in `src/insightbot/modules/analytics/export.py` with CWE-1236 CSV Formula Injection defense (`sanitize_csv_cell` neutralizing `=`, `+`, `-`, `@`, `\t`, `\r`, `%`), JSONL, and Markdown with `ExportManifest` and source display policy compliance (no forbidden full-text leaks). React component `AnalyticsView.tsx` with accessible table mode (WCAG 2.2 AA) and export center, integrated into `Header.tsx` and `App.tsx`. 5 dedicated unit & API tests in `tests/test_analytics.py`. Total backend suite reached 130 passed tests; Mypy clean (82 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T18 — Local Evidence-backed Generation
 

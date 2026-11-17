@@ -433,3 +433,48 @@ export interface ReviewStoryRequest {
   notes: string;
   excluded_article_ids?: string[];
 }
+
+// Analytics & Exports (Task T17)
+export interface SourceCoverageMetric {
+  source_id: string;
+  name: string;
+  article_count: number;
+  percentage: number;
+  average_reading_time_minutes: number;
+  average_word_count: number;
+  latest_article_at?: string | null;
+  publishing_lag_minutes?: number | null;
+}
+
+export interface LanguageDistributionMetric {
+  language: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TimelinePoint {
+  date: string;
+  count: number;
+  sources_breakdown: Record<string, number>;
+}
+
+export interface StoryStatusDistribution {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
+export interface AnalyticsOverviewReport {
+  total_articles: number;
+  total_sources: number;
+  total_stories: number;
+  unknown_publication_date_count: number;
+  quarantined_articles_count: number;
+  source_coverage: SourceCoverageMetric[];
+  language_distribution: LanguageDistributionMetric[];
+  timeline_trend: TimelinePoint[];
+  story_status_distribution: StoryStatusDistribution[];
+  as_of: string;
+}
+
+export type ExportFormat = "csv" | "jsonl" | "markdown";

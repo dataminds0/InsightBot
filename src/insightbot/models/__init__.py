@@ -1,5 +1,12 @@
 """Data models package for InsightBot."""
 
+from insightbot.models.analytics import (
+    AnalyticsOverviewReport,
+    LanguageDistributionMetric,
+    SourceCoverageMetric,
+    StoryStatusDistribution,
+    TimelinePoint,
+)
 from insightbot.models.article import Article, ArticleRevision, compute_content_hash
 from insightbot.models.audit import AuditLog
 from insightbot.models.comparison import (
@@ -17,6 +24,11 @@ from insightbot.models.duplicate import (
     DuplicateRelationship,
     DuplicateStatus,
     DuplicateType,
+)
+from insightbot.models.export import (
+    ExportFormat,
+    ExportManifest,
+    ExportTarget,
 )
 from insightbot.models.fetch import FetchRecord
 from insightbot.models.job import Job, JobStatus
@@ -47,6 +59,7 @@ from insightbot.models.workspace import (
 
 __all__ = [
     "AnalystReview",
+    "AnalyticsOverviewReport",
     "Article",
     "ArticleRevision",
     "AttributedDifference",
@@ -61,9 +74,13 @@ __all__ = [
     "EntityCategory",
     "EntityMention",
     "EventComparisonReport",
+    "ExportFormat",
+    "ExportManifest",
+    "ExportTarget",
     "FetchRecord",
     "Job",
     "JobStatus",
+    "LanguageDistributionMetric",
     "NoteItem",
     "PrivateNote",
     "ReviewStoryRequest",
@@ -75,6 +92,7 @@ __all__ = [
     "SearchResultItem",
     "Session",
     "Source",
+    "SourceCoverageMetric",
     "SourcePerspective",
     "SourcePolicy",
     "Story",
@@ -82,7 +100,9 @@ __all__ = [
     "StoryAuditAction",
     "StorySnapshot",
     "StoryStatus",
+    "StoryStatusDistribution",
     "TimelineMilestone",
+    "TimelinePoint",
     "User",
     "UserStatus",
     "VersionedEvidence",

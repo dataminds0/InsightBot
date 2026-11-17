@@ -7,13 +7,14 @@ import { ArticleDetailView } from "./components/ArticleDetailView";
 import { SourcesView } from "./components/SourcesView";
 import { StoriesView } from "./components/StoriesView";
 import { EventComparisonView } from "./components/EventComparisonView";
+import { AnalyticsView } from "./components/AnalyticsView";
 import { AdminView } from "./components/AdminView";
 import { WorkspaceView } from "./components/WorkspaceView";
 
 function MainApp() {
   const { user, isLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState<
-    "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace"
+    "articles" | "stories" | "comparison" | "analytics" | "sources" | "admin" | "workspace"
   >("articles");
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [comparisonStoryId, setComparisonStoryId] = useState<string | null>(null);
@@ -33,6 +34,9 @@ function MainApp() {
         setSelectedArticleId(null);
       } else if (path === "/comparison") {
         setCurrentTab("comparison");
+        setSelectedArticleId(null);
+      } else if (path === "/analytics") {
+        setCurrentTab("analytics");
         setSelectedArticleId(null);
       } else if (path === "/sources") {
         setCurrentTab("sources");
@@ -66,7 +70,14 @@ function MainApp() {
   };
 
   const handleTabChange = (
-    tab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace"
+    tab:
+      | "articles"
+      | "stories"
+      | "comparison"
+      | "analytics"
+      | "sources"
+      | "admin"
+      | "workspace"
   ) => {
     setCurrentTab(tab);
     setSelectedArticleId(null);
@@ -125,6 +136,8 @@ function MainApp() {
             onSelectArticle={handleSelectArticle}
             onBackToStories={() => handleTabChange("stories")}
           />
+        ) : currentTab === "analytics" ? (
+          <AnalyticsView />
         ) : currentTab === "sources" ? (
           <SourcesView />
         ) : currentTab === "workspace" ? (

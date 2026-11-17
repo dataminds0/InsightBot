@@ -8,6 +8,8 @@ from pymongo.database import Database
 from insightbot.config import Settings, get_settings
 from insightbot.infra.mongo import get_mongo_client
 from insightbot.models.user import Role, User
+from insightbot.modules.analytics.export import ExportService
+from insightbot.modules.analytics.service import AnalyticsService
 from insightbot.modules.deduplication.service import DeduplicationService
 from insightbot.modules.search.service import SearchService
 from insightbot.modules.stories.comparison import EventComparisonService
@@ -111,6 +113,20 @@ def get_comparison_service(
 ) -> EventComparisonService:
     """Dependency providing EventComparisonService."""
     return EventComparisonService(db)
+
+
+def get_analytics_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> AnalyticsService:
+    """Dependency providing AnalyticsService."""
+    return AnalyticsService(db)
+
+
+def get_export_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> ExportService:
+    """Dependency providing ExportService."""
+    return ExportService(db)
 
 
 def get_current_user(

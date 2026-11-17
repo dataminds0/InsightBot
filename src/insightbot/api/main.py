@@ -9,6 +9,7 @@ from insightbot.api.admin_audit import router as admin_audit_router
 from insightbot.api.admin_jobs import router as admin_jobs_router
 from insightbot.api.admin_sources import router as admin_sources_router
 from insightbot.api.admin_users import router as admin_users_router
+from insightbot.api.analytics import router as analytics_router
 from insightbot.api.articles import router as articles_router
 from insightbot.api.auth import router as auth_router
 from insightbot.api.middleware import RequestIDMiddleware, setup_exception_handlers
@@ -53,6 +54,7 @@ app.include_router(search_router)
 app.include_router(stories_router)
 app.include_router(sources_router)
 app.include_router(workspace_router)
+app.include_router(analytics_router)
 
 
 @app.get("/api/health")

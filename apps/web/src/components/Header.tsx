@@ -1,9 +1,9 @@
 import { useAuth } from "../context/AuthContext";
-import { FolderKanban, Layers, LogOut, Newspaper, Radio, Scale, Shield, User as UserIcon } from "lucide-react";
+import { BarChart3, FolderKanban, Layers, LogOut, Newspaper, Radio, Scale, Shield, User as UserIcon } from "lucide-react";
 
 interface HeaderProps {
-  currentTab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace";
-  onTabChange: (tab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace") => void;
+  currentTab: "articles" | "stories" | "comparison" | "analytics" | "sources" | "admin" | "workspace";
+  onTabChange: (tab: "articles" | "stories" | "comparison" | "analytics" | "sources" | "admin" | "workspace") => void;
 }
 
 export function Header({ currentTab, onTabChange }: HeaderProps) {
@@ -59,6 +59,19 @@ export function Header({ currentTab, onTabChange }: HeaderProps) {
               >
                 <Scale className="h-4 w-4" />
                 <span>مقارنة التغطية</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onTabChange("analytics")}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 space-x-reverse ${
+                  currentTab === "analytics"
+                    ? "bg-brand-light text-brand"
+                    : "text-muted hover:text-text hover:bg-slate-100"
+                }`}
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>التحليلات والتقارير</span>
               </button>
 
               <button

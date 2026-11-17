@@ -4452,6 +4452,370 @@
         }
       }
     },
+    "/api/analytics/overview": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get Analytics Overview",
+        "description": "Retrieve comprehensive analytics overview, source coverage percentages,\nlanguage breakdown, 30-day timeline trends, and Defect A13/A14 metrics.",
+        "operationId": "get_analytics_overview_api_analytics_overview_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsOverviewReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/articles": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Export Articles",
+        "description": "Export articles with CSV formula protection, bounded pagination,\nand source display policy enforcement.",
+        "operationId": "export_articles_api_export_articles_get",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExportFormat",
+              "description": "Export format (csv, jsonl, markdown)",
+              "default": "csv"
+            },
+            "description": "Export format (csv, jsonl, markdown)"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional search query filter",
+              "title": "Q"
+            },
+            "description": "Optional search query filter"
+          },
+          {
+            "name": "source_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional source filter",
+              "title": "Source Id"
+            },
+            "description": "Optional source filter"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional language filter",
+              "title": "Language"
+            },
+            "description": "Optional language filter"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Max articles to export (bounded <= 1000)",
+              "default": 500,
+              "title": "Limit"
+            },
+            "description": "Max articles to export (bounded <= 1000)"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/export/stories": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Export Stories",
+        "description": "Export story clusters with multi-source metadata.",
+        "operationId": "export_stories_api_export_stories_get",
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ExportFormat",
+              "description": "Export format (csv, jsonl, markdown)",
+              "default": "csv"
+            },
+            "description": "Export format (csv, jsonl, markdown)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional story status filter",
+              "title": "Status"
+            },
+            "description": "Optional story status filter"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Max stories to export",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Max stories to export"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health Check",
@@ -4543,6 +4907,71 @@
         ],
         "title": "AnalystReview",
         "description": "Audited Analyst/Admin review of story coverage comparison and membership."
+      },
+      "AnalyticsOverviewReport": {
+        "properties": {
+          "total_articles": {
+            "type": "integer",
+            "title": "Total Articles",
+            "default": 0
+          },
+          "total_sources": {
+            "type": "integer",
+            "title": "Total Sources",
+            "default": 0
+          },
+          "total_stories": {
+            "type": "integer",
+            "title": "Total Stories",
+            "default": 0
+          },
+          "unknown_publication_date_count": {
+            "type": "integer",
+            "title": "Unknown Publication Date Count",
+            "default": 0
+          },
+          "quarantined_articles_count": {
+            "type": "integer",
+            "title": "Quarantined Articles Count",
+            "default": 0
+          },
+          "source_coverage": {
+            "items": {
+              "$ref": "#/components/schemas/SourceCoverageMetric"
+            },
+            "type": "array",
+            "title": "Source Coverage"
+          },
+          "language_distribution": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageDistributionMetric"
+            },
+            "type": "array",
+            "title": "Language Distribution"
+          },
+          "timeline_trend": {
+            "items": {
+              "$ref": "#/components/schemas/TimelinePoint"
+            },
+            "type": "array",
+            "title": "Timeline Trend"
+          },
+          "story_status_distribution": {
+            "items": {
+              "$ref": "#/components/schemas/StoryStatusDistribution"
+            },
+            "type": "array",
+            "title": "Story Status Distribution"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          }
+        },
+        "type": "object",
+        "title": "AnalyticsOverviewReport",
+        "description": "Comprehensive analytics overview report reconciling underlying data."
       },
       "ArticleDetail": {
         "properties": {
@@ -5154,6 +5583,16 @@
         "title": "EventComparisonReport",
         "description": "Comprehensive comparison report across sources for an event/story cluster."
       },
+      "ExportFormat": {
+        "type": "string",
+        "enum": [
+          "csv",
+          "jsonl",
+          "markdown"
+        ],
+        "title": "ExportFormat",
+        "description": "Allowed export formats."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -5302,6 +5741,30 @@
         ],
         "title": "JobStatus",
         "description": "Lifecycle states of a background job."
+      },
+      "LanguageDistributionMetric": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "language"
+        ],
+        "title": "LanguageDistributionMetric",
+        "description": "Language breakdown across collected articles."
       },
       "LoginRequest": {
         "properties": {
@@ -5864,6 +6327,68 @@
         "title": "Source",
         "description": "Publisher source registry definition."
       },
+      "SourceCoverageMetric": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "article_count": {
+            "type": "integer",
+            "title": "Article Count",
+            "default": 0
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "default": 0.0
+          },
+          "average_reading_time_minutes": {
+            "type": "number",
+            "title": "Average Reading Time Minutes",
+            "default": 1.0
+          },
+          "average_word_count": {
+            "type": "number",
+            "title": "Average Word Count",
+            "default": 0.0
+          },
+          "latest_article_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Article At"
+          },
+          "publishing_lag_minutes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publishing Lag Minutes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id"
+        ],
+        "title": "SourceCoverageMetric",
+        "description": "Coverage statistics for an approved news source."
+      },
       "SourceHealthItem": {
         "properties": {
           "source_id": {
@@ -6346,6 +6871,30 @@
         "title": "StoryStatus",
         "description": "Lifecycle stages of a story/event cluster."
       },
+      "StoryStatusDistribution": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "percentage": {
+            "type": "number",
+            "title": "Percentage",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "StoryStatusDistribution",
+        "description": "Distribution of stories across lifecycle stages."
+      },
       "TimelineMilestone": {
         "properties": {
           "milestone_id": {
@@ -6412,6 +6961,32 @@
         ],
         "title": "TimelineMilestone",
         "description": "A single chronological milestone in an event timeline."
+      },
+      "TimelinePoint": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "sources_breakdown": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Sources Breakdown"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date"
+        ],
+        "title": "TimelinePoint",
+        "description": "Daily or hourly article volume milestone."
       },
       "ToggleSourceRequest": {
         "properties": {
