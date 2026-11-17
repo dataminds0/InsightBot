@@ -55,11 +55,14 @@ search_app = typer.Typer(help="Hybrid, Lexical, and Vector search commands.")
 generate_app = typer.Typer(help="Evidence-backed generation and evaluation commands.")
 runtime_app = typer.Typer(help="Container packaging, runtime health, and persistence smoke tests.")
 security_app = typer.Typer(help="Security gates audit, SSRF/CSRF defenses, and vulnerability checks.")
+benchmark_app = typer.Typer(help="Performance benchmarking and hardware profiling.")
+sources_batch_app = typer.Typer(help="Manage reversible source expansion batches.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
 app.add_typer(admin_app, name="admin")
 app.add_typer(sources_app, name="sources")
+sources_app.add_typer(sources_batch_app, name="batch")
 app.add_typer(models_app, name="models")
 app.add_typer(eval_app, name="eval")
 app.add_typer(dedup_app, name="dedup")
@@ -68,6 +71,7 @@ app.add_typer(search_app, name="search")
 app.add_typer(generate_app, name="generate")
 app.add_typer(runtime_app, name="runtime")
 app.add_typer(security_app, name="security")
+app.add_typer(benchmark_app, name="benchmark")
 
 
 @config_app.command(name="init")
@@ -300,6 +304,84 @@ def sources_validate(
         repo = SourceRepository(db)
         synced = sync_sources_to_db(sources, repo)
         typer.echo(f"[SUCCESS] Synchronized {synced} sources into database.")
+        client.close()
+
+
+@sources_batch_app.command(name="list")
+def sources_batch_list() -> None:
+    """List registered source expansion batches and their statuses."""
+    from insightbot.modules.sources.batches import SourceBatchManager
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[WARN] Cannot connect to MongoDB: {msg}")
+        return
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    mgr = SourceBatchManager(db)
+    batches = mgr.list_batches()
+
+    typer.echo(f"\nRegistered Source Batches: {len(batches)}")
+    for b in batches:
+        typer.echo(
+            f" - [{b.batch_id}] {b.name} | Status: {b.status.value.upper()} | Sources: {len(b.source_ids)}"
+        )
+        if b.rollback_reason:
+            typer.echo(f"   * Rollback Reason: {b.rollback_reason}")
+    client.close()
+
+
+@sources_batch_app.command(name="activate")
+def sources_batch_activate(
+    batch_id: str = typer.Argument(..., help="Unique batch identifier to activate."),
+    user: str = typer.Option("analyst", "--user", "-u", help="Operator username authorizing rollout."),
+) -> None:
+    """Activate all sources in a reviewed expansion batch."""
+    from insightbot.modules.sources.batches import SourceBatchManager
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    mgr = SourceBatchManager(db)
+    try:
+        count = mgr.activate_batch(batch_id, operator_username=user)
+        typer.echo(f"[SUCCESS] Activated batch '{batch_id}'. Enabled {count} publisher sources.")
+    except Exception as e:
+        typer.echo(f"[ERROR] Failed to activate batch '{batch_id}': {e}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+
+@sources_batch_app.command(name="rollback")
+def sources_batch_rollback(
+    batch_id: str = typer.Argument(..., help="Unique batch identifier to roll back."),
+    reason: str = typer.Option(..., "--reason", "-r", help="Detailed operational reason for rollback."),
+    user: str = typer.Option("analyst", "--user", "-u", help="Operator username authorizing rollback."),
+) -> None:
+    """Reversibly roll back an expansion batch by disabling all its sources."""
+    from insightbot.modules.sources.batches import SourceBatchManager
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    mgr = SourceBatchManager(db)
+    try:
+        count = mgr.rollback_batch(batch_id, operator_username=user, reason=reason)
+        typer.echo(f"[SUCCESS] Reversibly rolled back batch '{batch_id}'. Deactivated {count} sources.")
+    except Exception as e:
+        typer.echo(f"[ERROR] Failed to rollback batch '{batch_id}': {e}")
+        sys.exit(1)
+    finally:
         client.close()
 
 
@@ -1471,6 +1553,64 @@ def security_audit() -> None:
     typer.echo("-" * 80)
     typer.echo("SECURITY GATES AUDIT VERDICT: PASS (Zero blocking defects)")
     typer.echo("=" * 80 + "\n")
+
+
+@benchmark_app.command(name="run")
+def benchmark_run(
+    concurrency: int = typer.Option(10, "--concurrency", "-c", help="Concurrent query workers."),
+    samples: int = typer.Option(50, "--samples", "-n", help="Total test queries to execute."),
+) -> None:
+    """Run performance benchmark suite, hardware profiling, and latency verification (T22)."""
+    from insightbot.modules.operations.benchmark import run_benchmark_suite
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[INFO] Live MongoDB not reachable ({msg}). Running benchmark in offline in-memory simulation mode...")
+        import mongomock
+
+        client: Any = mongomock.MongoClient()
+        db = client[settings.mongo_db]
+    else:
+        client = get_mongo_client(settings)
+        db = client[settings.mongo_db]
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("               INSIGHTBOT PERFORMANCE & HARDWARE BENCHMARK (T22)")
+    typer.echo("=" * 80)
+
+    report = run_benchmark_suite(db, concurrency=concurrency, total_requests=samples)
+
+    typer.echo("1. Hardware & Platform Profile:")
+    typer.echo(f"   - CPUs: {report.hardware.cpu_count} logical cores")
+    typer.echo(
+        f"   - Total RAM: {report.hardware.total_ram_gb} GB (Available: {report.hardware.available_ram_gb} GB)"
+    )
+    typer.echo(
+        f"   - Disk: {report.hardware.disk_free_gb} GB free / {report.hardware.disk_total_gb} GB total"
+    )
+    typer.echo(
+        f"   - OS: {report.hardware.platform_system} ({report.hardware.platform_machine}), Python: {report.hardware.python_version}"
+    )
+
+    typer.echo("\n2. Projection Memory Optimization (Defect A12):")
+    typer.echo(f"   - Full payload bytes: {report.projection_efficiency.full_payload_bytes}")
+    typer.echo(f"   - Projected payload bytes: {report.projection_efficiency.projected_payload_bytes}")
+    typer.echo(f"   - Memory Reduction: {report.projection_efficiency.reduction_pct}% (Gate: >= 80%)")
+    typer.echo(f"   - Status: {'[PASS]' if report.projection_efficiency.passed_gate else '[FAIL]'}")
+
+    typer.echo(f"\n3. Concurrent Query Latency (concurrency={concurrency}, samples={samples}):")
+    typer.echo(f"   - p50: {report.query_latency.p50_ms} ms")
+    typer.echo(f"   - p95: {report.query_latency.p95_ms} ms (Gate: < 1000.0 ms)")
+    typer.echo(f"   - p99: {report.query_latency.p99_ms} ms")
+    typer.echo(f"   - Throughput: {report.query_latency.qps} QPS")
+    typer.echo(f"   - Status: {'[PASS]' if report.p95_latency_under_1s else '[FAIL]'}")
+
+    typer.echo("-" * 80)
+    typer.echo(f"OVERALL PERFORMANCE BENCHMARK: {'PASS' if report.overall_passed else 'FAIL'}")
+    typer.echo("=" * 80 + "\n")
+
+    client.close()
 
 
 if __name__ == "__main__":

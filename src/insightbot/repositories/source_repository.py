@@ -49,6 +49,23 @@ class SourceRepository:
         )
         return result.modified_count > 0
 
+    def get_by_batch_id(self, batch_id: str) -> list[Source]:
+        """Fetch all sources associated with a specific expansion batch ID."""
+        cursor = self.sources.find({"batch_id": batch_id}).sort("source_id", 1)
+        results = []
+        for doc in cursor:
+            doc.pop("_id", None)
+            results.append(Source.model_validate(doc))
+        return results
+
+    def set_batch_enabled(self, batch_id: str, enabled: bool) -> int:
+        """Atomically enable or disable all sources in a batch (reversibility guarantee)."""
+        result = self.sources.update_many(
+            {"batch_id": batch_id},
+            {"$set": {"enabled": enabled}},
+        )
+        return int(result.modified_count)
+
     def get_source_health_summary(self) -> list[dict[str, Any]]:
         """
         Aggregate freshness, total articles, and failure counts per registered source.

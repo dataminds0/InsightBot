@@ -24,6 +24,8 @@ class Source(BaseModel):
     feed_urls: list[str] = Field(default_factory=list)
     language: str = "ar"
     enabled: bool = False
+    batch_id: str | None = None
+    review_status: str = "reviewed"
     policy: SourcePolicy = Field(default_factory=SourcePolicy)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
