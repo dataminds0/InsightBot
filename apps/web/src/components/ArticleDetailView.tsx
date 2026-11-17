@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiClientError } from "../lib/api";
-import type { ArticleDetail, ArticleVersionItem } from "../types/api";
+import type { ArticleDetail, ArticleVersionItem, DuplicateRelationshipItem } from "../types/api";
 import { EvidenceStrip } from "./EvidenceStrip";
 import {
   AlertCircle,
@@ -15,6 +15,8 @@ import {
   FileText,
   GitBranch,
   History,
+  Layers,
+  RefreshCw,
   Save,
   ShieldAlert,
   Trash2,
@@ -40,6 +42,10 @@ export function ArticleDetailView({ articleId, onBack }: ArticleDetailViewProps)
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Duplicates & Syndication states
+  const [duplicates, setDuplicates] = useState<DuplicateRelationshipItem[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   // Workspace states
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
@@ -63,6 +69,13 @@ export function ArticleDetailView({ articleId, onBack }: ArticleDetailViewProps)
           setVersions(vList);
         } catch {
           // Version list optional fallback
+        }
+
+        try {
+          const dupList = await api.getArticleDuplicates(articleId, controller.signal);
+          setDuplicates(dupList);
+        } catch {
+          // Duplicates list optional fallback
         }
 
         // Load bookmark status and analyst note if authorized
@@ -140,6 +153,19 @@ export function ArticleDetailView({ articleId, onBack }: ArticleDetailViewProps)
       setTimeout(() => setNoteFeedback(null), 3000);
     } catch {
       setNoteFeedback("فشل حذف الملاحظة.");
+    }
+  };
+
+  const handleRunDeduplication = async () => {
+    if (isCheckingDuplicates) return;
+    setIsCheckingDuplicates(true);
+    try {
+      const res = await api.runArticleDeduplication(articleId);
+      setDuplicates(res);
+    } catch {
+      // Failed to run deduplication
+    } finally {
+      setIsCheckingDuplicates(false);
     }
   };
 
@@ -443,6 +469,95 @@ export function ArticleDetailView({ articleId, onBack }: ArticleDetailViewProps)
           </div>
         </section>
       )}
+
+      {/* Duplicates & Wire Syndication Section (التغطيات المكررة وإعادة النشر) */}
+      <section className="mt-8 bg-surface border border-border rounded-xl p-6 shadow-xs">
+        <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Layers className="h-5 w-5 text-brand" />
+            <h2 className="text-base font-bold text-text">
+              التغطيات المكررة وإعادة النشر ({duplicates.length})
+            </h2>
+          </div>
+          {isAnalystOrAdmin && (
+            <button
+              type="button"
+              onClick={handleRunDeduplication}
+              disabled={isCheckingDuplicates}
+              className="inline-flex items-center space-x-1.5 space-x-reverse px-3 py-1.5 bg-canvas border border-border hover:bg-slate-100 disabled:opacity-50 text-text rounded-lg text-xs font-medium transition-colors"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isCheckingDuplicates ? "animate-spin" : ""}`} />
+              <span>{isCheckingDuplicates ? "جاري الفحص..." : "فحص التكرار الآن"}</span>
+            </button>
+          )}
+        </div>
+
+        {duplicates.length === 0 ? (
+          <p className="text-xs text-muted">
+            لا توجد تغطيات مكررة أو إعادة نشر متطابقة تم رصدها لهذا المقال حتى الآن.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {duplicates.map((dup) => (
+              <div
+                key={dup.relationship_id}
+                className="p-3.5 rounded-lg border border-border bg-canvas flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <span
+                      className={`px-2 py-0.5 rounded font-medium text-[11px] ${
+                        dup.duplicate_type === "syndication"
+                          ? "bg-purple-100 text-purple-800"
+                          : dup.duplicate_type === "exact_hash"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {dup.duplicate_type === "syndication"
+                        ? "سلك وكالات (Syndication)"
+                        : dup.duplicate_type === "exact_hash"
+                        ? "تطابق تام (Exact Hash)"
+                        : "شبه مكرر (Near Duplicate)"}
+                    </span>
+                    {dup.evidence.shared_wire_agency && (
+                      <span className="font-semibold text-text">
+                        وكالة: {dup.evidence.shared_wire_agency}
+                      </span>
+                    )}
+                    <span className="text-muted">
+                      نسبة التطابق: {(dup.similarity_score * 100).toFixed(0)}%
+                    </span>
+                  </div>
+
+                  {dup.related_article && (
+                    <div className="text-text font-medium text-sm pt-1">
+                      <bdi>{dup.related_article.title}</bdi>
+                    </div>
+                  )}
+
+                  <p className="text-[11px] text-muted">
+                    {dup.evidence.reason || "تم كشف التطابق وفق خوارزمية المقارنة النصية وشينغلينغ."}
+                  </p>
+                </div>
+
+                {dup.related_article && (
+                  <div className="flex-shrink-0 text-left sm:text-right">
+                    <span className="text-xs text-muted block font-mono">
+                      {dup.related_article.source_id}
+                    </span>
+                    {dup.related_article.published_at && (
+                      <span className="text-[11px] text-muted block">
+                        {new Date(dup.related_article.published_at).toLocaleString("ar-EG")}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Versions & Revisions History Drawer */}
       {versions.length > 0 && (

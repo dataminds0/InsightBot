@@ -2,6 +2,12 @@
 
 from insightbot.models.article import Article, ArticleRevision, compute_content_hash
 from insightbot.models.audit import AuditLog
+from insightbot.models.duplicate import (
+    DuplicateEvidence,
+    DuplicateRelationship,
+    DuplicateStatus,
+    DuplicateType,
+)
 from insightbot.models.fetch import FetchRecord
 from insightbot.models.job import Job, JobStatus
 from insightbot.models.source import Source, SourcePolicy
@@ -20,6 +26,10 @@ __all__ = [
     "AuditLog",
     "Bookmark",
     "BookmarkItem",
+    "DuplicateEvidence",
+    "DuplicateRelationship",
+    "DuplicateStatus",
+    "DuplicateType",
     "FetchRecord",
     "Job",
     "JobStatus",

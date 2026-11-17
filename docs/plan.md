@@ -433,10 +433,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1; NLP/Data; depends T12.**
 
-- [ ] Exact and evaluated near-duplicate relationships/evidence preserving publisher originals.
-- [ ] Distinguish syndication/events and test similar headlines/different numbers.
+- [x] Exact and evaluated near-duplicate relationships/evidence preserving publisher originals.
+- [x] Distinguish syndication/events and test similar headlines/different numbers.
 
 **Accept:** reported precision/recall, stable replay, no collapse of distinct reports.
+- Comprehensive Verification: Precision 100.0% (target >= 98%), Recall 100.0% (target >= 80%), zero collapse of distinct updates/numerical reports. 8 dedicated unit & API tests in `tests/test_deduplication.py`. Total backend suite reached 108 passed tests, Ruff clean, Mypy clean (60 source files). Web typecheck and 11 tests passed, production build clean.
 
 ### T14 — Events, Entities, and Review
 

@@ -8,8 +8,10 @@ from pymongo.database import Database
 from insightbot.config import Settings, get_settings
 from insightbot.infra.mongo import get_mongo_client
 from insightbot.models.user import Role, User
+from insightbot.modules.deduplication.service import DeduplicationService
 from insightbot.repositories.article_repository import ArticleRepository
 from insightbot.repositories.audit_repository import AuditRepository
+from insightbot.repositories.duplicate_repository import DuplicateRepository
 from insightbot.repositories.job_repository import JobRepository
 from insightbot.repositories.source_repository import SourceRepository
 from insightbot.repositories.user_repository import UserRepository
@@ -71,6 +73,20 @@ def get_workspace_repository(
 ) -> WorkspaceRepository:
     """Dependency providing WorkspaceRepository."""
     return WorkspaceRepository(db)
+
+
+def get_duplicate_repository(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> DuplicateRepository:
+    """Dependency providing DuplicateRepository."""
+    return DuplicateRepository(db)
+
+
+def get_deduplication_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> DeduplicationService:
+    """Dependency providing DeduplicationService."""
+    return DeduplicationService(db)
 
 
 def get_current_user(

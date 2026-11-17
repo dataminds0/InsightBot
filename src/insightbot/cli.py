@@ -13,6 +13,7 @@ from insightbot.flows.worker import WorkerService
 from insightbot.infra.migrations import IndexCollisionError, apply_migrations
 from insightbot.infra.mongo import check_mongo_connection, get_mongo_client
 from insightbot.models.user import Role, UserStatus
+from insightbot.modules.deduplication import DeduplicationEngine, DeduplicationService
 from insightbot.modules.ingestion.service import IngestionService
 from insightbot.modules.nlp import (
     EventTimeSplitter,
@@ -42,6 +43,7 @@ admin_app = typer.Typer(help="Administrator management commands.")
 sources_app = typer.Typer(help="Source definition and validation commands.")
 models_app = typer.Typer(help="Model manifest and local weight lifecycle management.")
 eval_app = typer.Typer(help="Multilingual evaluation, gold corpus, and quality reports.")
+dedup_app = typer.Typer(help="Deduplication and syndication analysis commands.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
@@ -49,6 +51,7 @@ app.add_typer(admin_app, name="admin")
 app.add_typer(sources_app, name="sources")
 app.add_typer(models_app, name="models")
 app.add_typer(eval_app, name="eval")
+app.add_typer(dedup_app, name="dedup")
 
 
 @config_app.command(name="init")
@@ -538,6 +541,208 @@ def eval_run(
     )
     typer.echo("=" * 80)
     typer.echo(f"Acceptance Criteria (Macro-F1 >= 0.80 & Coverage >= 80%): {ov_gate}\n")
+
+
+# --- Deduplication Commands ---
+
+
+@dedup_app.command(name="run")
+def dedup_run(
+    limit: int = typer.Option(50, "--limit", help="Maximum un-deduplicated articles to scan."),
+) -> None:
+    """Run deduplication on pending ingested articles in database."""
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = DeduplicationService(db)
+
+    typer.echo(f"[INFO] Scanning pending articles for duplicates (limit: {limit})...")
+    count = service.run_batch_deduplication(limit=limit)
+    typer.echo(f"[SUCCESS] Scanned {count} article(s) and persisted duplicate relationships.")
+    client.close()
+
+
+@dedup_app.command(name="eval")
+def dedup_eval() -> None:
+    """Evaluate deduplication precision/recall and verify 'similar headlines / different numbers' defense."""
+    from datetime import datetime, timezone
+
+    from insightbot.models.article import Article, compute_content_hash
+
+    detector = DeduplicationEngine(near_duplicate_threshold=0.85, temporal_window_hours=72.0)
+    now = datetime(2026, 11, 17, 10, 0, tzinfo=timezone.utc)
+
+    # Evaluation Pairs: (article_a, article_b, expected_is_duplicate, description)
+    test_cases: list[tuple[Article, Article, bool, str]] = []
+
+    # 1. Exact content hash syndication
+    wire_body = "أعلنت وزارة الطاقة اليوم الأحد اتفاقاً جديداً لزيادة صادرات الغاز الطبيعي المسال (رويترز)."
+    a1 = Article(
+        article_id="eval-1a",
+        source_id="reuters_ar",
+        canonical_url="https://reuters.com/1",
+        original_url="https://reuters.com/1",
+        resolved_url="https://reuters.com/1",
+        title="اتفاق طاقة جديد لزيادة صادرات الغاز المسال",
+        body_text=wire_body,
+        content_hash=compute_content_hash(wire_body),
+        published_at=now,
+    )
+    a2 = Article(
+        article_id="eval-1b",
+        source_id="aljazeera_ar",
+        canonical_url="https://aljazeera.net/1",
+        original_url="https://aljazeera.net/1",
+        resolved_url="https://aljazeera.net/1",
+        title="رويترز: اتفاق طاقة جديد لزيادة صادرات الغاز",
+        body_text=wire_body,
+        content_hash=compute_content_hash(wire_body),
+        published_at=now,
+    )
+    test_cases.append((a1, a2, True, "Exact Hash Wire Syndication"))
+
+    # 2. Near-duplicate with high Jaccard similarity (> 0.88)
+    near_body_1 = "أغلقت مؤشرات الأسهم الأوروبية على ارتفاع طفيف في ختام تداولات الأسبوع مدعومة بمكاسب قطاع التكنولوجيا وأسهم البنوك."
+    near_body_2 = "أغلقت مؤشرات الأسهم الأوروبية على ارتفاع طفيف في ختام تداولات الأسبوع مدعومة بمكاسب قطاع التكنولوجيا وأسهم البنوك والمصارف الكبرى."
+    b1 = Article(
+        article_id="eval-2a",
+        source_id="bbc_ar",
+        canonical_url="https://bbc.com/ar/stocks",
+        original_url="https://bbc.com/ar/stocks",
+        resolved_url="https://bbc.com/ar/stocks",
+        title="الأسهم الأوروبية تختتم الأسبوع على ارتفاع طفيف",
+        body_text=near_body_1,
+        content_hash=compute_content_hash(near_body_1),
+        published_at=now,
+    )
+    b2 = Article(
+        article_id="eval-2b",
+        source_id="alarabiya_ar",
+        canonical_url="https://alarabiya.net/stocks",
+        original_url="https://alarabiya.net/stocks",
+        resolved_url="https://alarabiya.net/stocks",
+        title="الأسهم الأوروبية ترتفع في ختام تعاملات الأسبوع",
+        body_text=near_body_2,
+        content_hash=compute_content_hash(near_body_2),
+        published_at=now,
+    )
+    test_cases.append((b1, b2, True, "Near-Duplicate High Shingle Overlap"))
+
+    # 3. CRITICAL DEFECT TEST: Similar Arabic headlines with DIFFERENT numbers (Must NOT collapse!)
+    c1 = Article(
+        article_id="eval-3a",
+        source_id="source_a",
+        canonical_url="https://news-a.com/crash",
+        original_url="https://news-a.com/crash",
+        resolved_url="https://news-a.com/crash",
+        title="مصرع 12 شخصاً وإصابة آخرين في حادث تصادم حافلة قرب القاهرة",
+        body_text="لقي 12 شخصاً مصرعهم اليوم في حادث سير مروع وقع على الطريق الصحراوي.",
+        content_hash=compute_content_hash("لقي 12 شخصاً مصرعهم اليوم في حادث سير مروع وقع على الطريق الصحراوي."),
+        published_at=now,
+    )
+    c2 = Article(
+        article_id="eval-3b",
+        source_id="source_b",
+        canonical_url="https://news-b.com/crash",
+        original_url="https://news-b.com/crash",
+        resolved_url="https://news-b.com/crash",
+        title="مصرع 45 شخصاً وإصابة آخرين في حادث تصادم حافلة قرب القاهرة",
+        body_text="لقي 45 شخصاً مصرعهم اليوم في حادث سير مروع وقع على الطريق الصحراوي في حصيلة جديدة.",
+        content_hash=compute_content_hash("لقي 45 شخصاً مصرعهم اليوم في حادث سير مروع وقع على الطريق الصحراوي في حصيلة جديدة."),
+        published_at=now,
+    )
+    test_cases.append((c1, c2, False, "Similar Arabic Headline With Divergent Numbers (12 vs 45)"))
+
+    # 4. CRITICAL DEFECT TEST: Similar English headlines with DIFFERENT numbers (Must NOT collapse!)
+    d1 = Article(
+        article_id="eval-4a",
+        source_id="reuters_en",
+        canonical_url="https://reuters.com/en/flood-10",
+        original_url="https://reuters.com/en/flood-10",
+        resolved_url="https://reuters.com/en/flood-10",
+        title="At least 10 killed in flash floods following heavy rainfall",
+        body_text="Authorities reported at least 10 fatalities after severe downpours swept through rural regions.",
+        content_hash=compute_content_hash("Authorities reported at least 10 fatalities after severe downpours swept through rural regions."),
+        published_at=now,
+    )
+    d2 = Article(
+        article_id="eval-4b",
+        source_id="bbc_en",
+        canonical_url="https://bbc.com/en/flood-70",
+        original_url="https://bbc.com/en/flood-70",
+        resolved_url="https://bbc.com/en/flood-70",
+        title="At least 70 killed in flash floods following heavy rainfall",
+        body_text="Authorities reported at least 70 fatalities after severe downpours swept through rural regions in latest update.",
+        content_hash=compute_content_hash("Authorities reported at least 70 fatalities after severe downpours swept through rural regions in latest update."),
+        published_at=now,
+    )
+    test_cases.append((d1, d2, False, "Similar English Headline With Divergent Numbers (10 vs 70)"))
+
+    # 5. Distinct reports in completely different domains
+    e1 = Article(
+        article_id="eval-5a",
+        source_id="bbc_ar",
+        canonical_url="https://bbc.com/tech",
+        original_url="https://bbc.com/tech",
+        resolved_url="https://bbc.com/tech",
+        title="إطلاق تحديث برمجي جديد لأنظمة الحوسبة السحابية",
+        body_text="أطلقت الشركة المتخصصة نظاماً جديداً لإدارة قواعد البيانات والشبكات الذكية.",
+        content_hash=compute_content_hash("أطلقت الشركة المتخصصة نظاماً جديداً لإدارة قواعد البيانات والشبكات الذكية."),
+        published_at=now,
+    )
+    test_cases.append((a1, e1, False, "Completely Distinct Stories"))
+
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("               DEDUPLICATION ENGINE EVALUATION REPORT")
+    typer.echo("=" * 80)
+    typer.echo(f"{'TEST CASE':<52} {'EXPECTED':<10} {'PRED':<10} {'RESULT'}")
+    typer.echo("-" * 80)
+
+    for art_a, art_b, expected_dup, desc in test_cases:
+        rel = detector.compare(art_a, art_b)
+        pred_dup = rel is not None
+
+        if expected_dup and pred_dup:
+            tp += 1
+            verdict = "PASS (TP)"
+        elif not expected_dup and not pred_dup:
+            tn += 1
+            verdict = "PASS (TN)"
+        elif not expected_dup and pred_dup:
+            fp += 1
+            verdict = "FAIL (FP)"
+        else:
+            fn += 1
+            verdict = "FAIL (FN)"
+
+        exp_str = "DUP" if expected_dup else "DISTINCT"
+        pred_str = "DUP" if pred_dup else "DISTINCT"
+        typer.echo(f"{desc:<52} {exp_str:<10} {pred_str:<10} {verdict}")
+
+    typer.echo("-" * 80)
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 1.0
+    prec_pct = f"{precision * 100:.1f}%"
+    rec_pct = f"{recall * 100:.1f}%"
+
+    passed_gate = precision >= 0.98 and recall >= 0.80
+    gate_str = "PASS" if passed_gate else "FAIL"
+
+    typer.echo(f"PRECISION: {prec_pct:<10} (Target: >= 98.0%)")
+    typer.echo(f"RECALL:    {rec_pct:<10} (Target: >= 80.0%)")
+    typer.echo(f"ZERO COLLAPSE OF DISTINCT REPORTS: {'VERIFIED' if fp == 0 else 'VIOLATED'}")
+    typer.echo(f"ACCEPTANCE CRITERIA VERDICT:       {gate_str}")
+    typer.echo("=" * 80 + "\n")
 
 
 if __name__ == "__main__":

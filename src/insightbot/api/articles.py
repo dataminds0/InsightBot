@@ -1,11 +1,16 @@
 """Article API endpoints: projected listing, detail, and immutable revision snapshots."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from insightbot.api.deps import get_article_repository, require_viewer
+from insightbot.api.deps import (
+    get_article_repository,
+    get_deduplication_service,
+    require_analyst,
+    require_viewer,
+)
 from insightbot.api.schemas.articles import (
     ArticleDetail,
     ArticleListItem,
@@ -13,6 +18,7 @@ from insightbot.api.schemas.articles import (
     ArticleVersionItem,
 )
 from insightbot.models.user import User
+from insightbot.modules.deduplication.service import DeduplicationService
 from insightbot.repositories.article_repository import ArticleRepository
 
 router = APIRouter(prefix="/api/articles", tags=["Articles"])
@@ -116,3 +122,38 @@ def get_article_version_snapshot(
             detail=f"Version {version_number} for article '{article_id}' was not found.",
         )
     return ArticleVersionItem.model_validate(revision.model_dump())
+
+
+@router.get("/{article_id}/duplicates", response_model=list[dict[str, Any]])
+def get_article_duplicates(
+    article_id: str,
+    current_user: User = Depends(require_viewer),
+    article_repo: ArticleRepository = Depends(get_article_repository),
+    dedup_service: DeduplicationService = Depends(get_deduplication_service),
+) -> list[dict[str, Any]]:
+    """Retrieve all confirmed duplicate and syndication relationships for an article."""
+    article = article_repo.get_by_id(article_id)
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Article '{article_id}' was not found.",
+        )
+    return dedup_service.get_duplicates_for_article_with_previews(article_id)
+
+
+@router.post("/{article_id}/deduplicate", response_model=list[dict[str, Any]])
+def run_article_deduplication(
+    article_id: str,
+    current_user: User = Depends(require_analyst),
+    article_repo: ArticleRepository = Depends(get_article_repository),
+    dedup_service: DeduplicationService = Depends(get_deduplication_service),
+) -> list[dict[str, Any]]:
+    """Trigger deduplication check on an article against temporal candidate window."""
+    article = article_repo.get_by_id(article_id)
+    if not article:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Article '{article_id}' was not found.",
+        )
+    dedup_service.deduplicate_article(article_id)
+    return dedup_service.get_duplicates_for_article_with_previews(article_id)

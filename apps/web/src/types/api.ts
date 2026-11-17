@@ -210,3 +210,34 @@ export interface NoteListResponse {
   skip: number;
   limit: number;
 }
+
+export interface DuplicateEvidence {
+  content_hash_match: boolean;
+  jaccard_similarity: number;
+  headline_similarity: number;
+  shared_wire_agency?: string | null;
+  differing_numbers_found: string[];
+  temporal_delta_hours: number;
+  reason: string;
+  extra_data?: Record<string, unknown>;
+}
+
+export interface DuplicateRelationshipItem {
+  relationship_id: string;
+  is_canonical: boolean;
+  duplicate_type: "exact_hash" | "syndication" | "near_duplicate" | string;
+  status: "confirmed" | "flagged" | "rejected" | string;
+  similarity_score: number;
+  evidence: DuplicateEvidence;
+  detected_at: string;
+  related_article?: {
+    article_id: string;
+    source_id: string;
+    title: string;
+    canonical_url: string;
+    published_at?: string | null;
+    language: string;
+    word_count?: number;
+    reading_time_minutes?: number;
+  } | null;
+}

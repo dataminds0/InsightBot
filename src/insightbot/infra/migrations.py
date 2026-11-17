@@ -163,6 +163,32 @@ INDEX_SPECS: dict[str, list[dict[str, Any]]] = {
             "name": "idx_notes_user_updated",
         },
     ],
+    "duplicate_relationships": [
+        {
+            "keys": [
+                ("canonical_article_id", ASCENDING),
+                ("duplicate_article_id", ASCENDING),
+            ],
+            "name": "idx_dup_rel_canonical_duplicate_unique",
+            "unique": True,
+        },
+        {
+            "keys": [("duplicate_article_id", ASCENDING)],
+            "name": "idx_dup_rel_duplicate",
+        },
+        {
+            "keys": [("canonical_article_id", ASCENDING)],
+            "name": "idx_dup_rel_canonical",
+        },
+        {
+            "keys": [("duplicate_type", ASCENDING)],
+            "name": "idx_dup_rel_type",
+        },
+        {
+            "keys": [("detected_at", DESCENDING)],
+            "name": "idx_dup_rel_detected_at",
+        },
+    ],
 }
 
 
