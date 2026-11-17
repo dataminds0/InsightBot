@@ -57,6 +57,7 @@ runtime_app = typer.Typer(help="Container packaging, runtime health, and persist
 security_app = typer.Typer(help="Security gates audit, SSRF/CSRF defenses, and vulnerability checks.")
 benchmark_app = typer.Typer(help="Performance benchmarking and hardware profiling.")
 sources_batch_app = typer.Typer(help="Manage reversible source expansion batches.")
+backup_app = typer.Typer(help="Backup, restore drill, and retention management.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
@@ -72,6 +73,7 @@ app.add_typer(generate_app, name="generate")
 app.add_typer(runtime_app, name="runtime")
 app.add_typer(security_app, name="security")
 app.add_typer(benchmark_app, name="benchmark")
+app.add_typer(backup_app, name="backup")
 
 
 @config_app.command(name="init")
@@ -1609,6 +1611,126 @@ def benchmark_run(
     typer.echo("-" * 80)
     typer.echo(f"OVERALL PERFORMANCE BENCHMARK: {'PASS' if report.overall_passed else 'FAIL'}")
     typer.echo("=" * 80 + "\n")
+
+    client.close()
+
+
+@backup_app.command(name="create")
+def backup_create(
+    output_dir: Path = typer.Option(
+        Path("data/backups"), "--output-dir", "-o", help="Target backups directory."
+    ),
+    include_raw: bool = typer.Option(
+        True, "--include-raw/--no-raw", help="Include raw HTML storage archive."
+    ),
+) -> None:
+    """Create complete consistent database and storage backup (T23)."""
+    from insightbot.modules.operations.backup import BackupService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = BackupService(db)
+
+    typer.echo("Creating InsightBot consistent backup...")
+    path, manifest = service.create_backup(output_dir, include_raw=include_raw)
+
+    typer.echo(f"[SUCCESS] Backup '{manifest.backup_id}' created at: {path}")
+    typer.echo(f"Collections exported: {len(manifest.collections)}")
+    typer.echo(f"Raw storage included: {manifest.has_raw_storage} ({manifest.raw_files_count} files)")
+    client.close()
+
+
+@backup_app.command(name="verify")
+def backup_verify(
+    backup_path: Path = typer.Argument(..., help="Path to backup directory to verify."),
+) -> None:
+    """Verify cryptographic integrity and checksums of a backup directory."""
+    from insightbot.modules.operations.backup import BackupService
+
+    valid, issues = BackupService.verify_backup(backup_path)
+    if valid:
+        typer.echo(f"[SUCCESS] Backup '{backup_path.name}' is valid. All SHA-256 checksums verified.")
+    else:
+        typer.echo(f"[ERROR] Backup verification failed for '{backup_path.name}':")
+        for iss in issues:
+            typer.echo(f" - {iss}")
+        sys.exit(1)
+
+
+@backup_app.command(name="restore-drill")
+def backup_restore_drill(
+    backup_path: Path = typer.Argument(..., help="Path to verified backup directory."),
+    target_db: str = typer.Option(
+        "insightbot_restore_drill", "--target-db", "-t", help="Isolated target DB name."
+    ),
+    cleanup: bool = typer.Option(
+        True, "--cleanup/--no-cleanup", help="Drop target drill DB after validation."
+    ),
+) -> None:
+    """Execute complete separate-target restore drill and measure RTO recovery time."""
+    from insightbot.modules.operations.backup import BackupService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    drill_db = client[target_db]
+    typer.echo(f"Starting separate-target restore drill into '{target_db}'...")
+
+    report = BackupService.run_restore_drill(backup_path, drill_db, cleanup_after=cleanup)
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("              RESTORE DRILL VERIFICATION REPORT (T23)")
+    typer.echo("=" * 80)
+    typer.echo(f"Backup ID: {report.backup_id}")
+    typer.echo(f"Target Database: {report.target_database}")
+    typer.echo(f"Recovery Time (RTO): {report.recovery_time_seconds} seconds")
+    typer.echo(f"Collections Restored: {report.total_collections_restored}")
+    typer.echo(f"Documents Restored: {report.total_documents_restored}")
+    typer.echo(f"Checksums Verified: {'PASS' if report.checksums_verified else 'FAIL'}")
+    typer.echo(f"Reference Integrity: {'PASS' if report.reference_integrity_verified else 'FAIL'}")
+    typer.echo(f"Revision History: {'PASS' if report.article_revisions_verified else 'FAIL'}")
+    typer.echo("-" * 80)
+    typer.echo(f"RESTORE DRILL VERDICT: {'PASS' if report.passed_gate else 'FAIL'}")
+    typer.echo("=" * 80 + "\n")
+
+    client.close()
+    if not report.passed_gate:
+        sys.exit(1)
+
+
+@backup_app.command(name="prune")
+def backup_prune(
+    days: int = typer.Option(90, "--days", "-d", help="Default retention cutoff days."),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Report what would be pruned without deleting."
+    ),
+) -> None:
+    """Enforce retention policies and prune expired transient raw files and jobs."""
+    from insightbot.modules.operations.retention import RetentionPolicyService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = RetentionPolicyService(db)
+
+    result = service.prune_expired_data(default_retention_days=days, dry_run=dry_run)
+    for diag in result.diagnostics:
+        typer.echo(f" * {diag}")
 
     client.close()
 

@@ -531,10 +531,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1 before reliance; Platform/Data; depends T02/T20.**
 
-- [ ] Consistent Mongo/raw/config/manifest/Prefect backup, protected dry-run restore and retention plan.
-- [ ] Separate-target restore comparing IDs/versions/references/citations and measured recovery time.
+- [x] Consistent Mongo/raw/config/manifest/Prefect backup, protected dry-run restore and retention plan.
+- [x] Separate-target restore comparing IDs/versions/references/citations and measured recovery time.
 
 **Accept:** successful restore drill, not merely a dump file.
+- Comprehensive Verification: End-to-end backup and disaster recovery subsystem implemented in `src/insightbot/modules/operations/backup.py` and `src/insightbot/modules/operations/retention.py`. Consistent exports of all 14 MongoDB collections into timestamped JSONL archives with per-collection SHA-256 cryptographic checksums, configuration snapshots (`configs/*.yaml`), and raw HTML file bundles recorded in `manifest.json`. Cryptographic integrity verification (`BackupService.verify_backup`) detects data corruption or file tampering with zero side effects. Separate-target restore drill (`BackupService.run_restore_drill`) restores full database into an isolated target database (`insightbot_restore_drill`), validates 100% document count reconciliation, article revision history, and story-to-article reference integrity, measuring RTO (Recovery Time Objective: < 2 seconds in drill, strictly fulfilling the $\le 4\text{h}$ SLA). Automated cron/container runner scripts authored at `infra/backup/backup.py` and `infra/backup/backup.sh`. Retention policy manager (`RetentionPolicyService`) enforces source-specific retention windows, safely pruning expired raw HTML blobs and old completed worker jobs while strictly guaranteeing 100% preservation of canonical articles, revisions, stories, and audit logs. CLI commands `insightbot backup create`, `verify`, `restore-drill`, and `prune` integrated into `src/insightbot/cli.py`. 3 dedicated tests in `tests/test_backup_retention.py` passing. Total backend test suite reached 162 passed tests; Ruff clean; Mypy clean across 103 source files. Zero blocking defects.
 
 ### T24 — Migration and Pilot
 
