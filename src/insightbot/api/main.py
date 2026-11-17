@@ -11,9 +11,11 @@ from insightbot.api.admin_sources import router as admin_sources_router
 from insightbot.api.admin_users import router as admin_users_router
 from insightbot.api.analytics import router as analytics_router
 from insightbot.api.articles import router as articles_router
+from insightbot.api.assistant import router as assistant_router
 from insightbot.api.auth import router as auth_router
 from insightbot.api.generation import router as generation_router
 from insightbot.api.middleware import RequestIDMiddleware, setup_exception_handlers
+from insightbot.api.notifications import router as notifications_router
 from insightbot.api.search import router as search_router
 from insightbot.api.sources import router as sources_router
 from insightbot.api.stories import router as stories_router
@@ -57,6 +59,8 @@ app.include_router(sources_router)
 app.include_router(workspace_router)
 app.include_router(analytics_router)
 app.include_router(generation_router)
+app.include_router(notifications_router)
+app.include_router(assistant_router)
 
 
 @app.get("/api/health")
@@ -76,8 +80,8 @@ def get_capabilities() -> dict[str, Any]:
         "version": "0.1.0",
         "languages": ["ar", "en", "ru"],
         "rtl_languages": ["ar"],
-        "search_engine": "mongo_regex",
-        "nlp_enabled": False,
-        "assistant_enabled": False,
+        "search_engine": "hybrid_rrf",
+        "nlp_enabled": True,
+        "assistant_enabled": True,
         "max_page_limit": 100,
     }

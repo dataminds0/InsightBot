@@ -492,9 +492,10 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P2; Full-stack; depends T11/T17; assistant T18.**
 
-- [ ] Scope/progress/cancel/citations/unavailability UI, event dedup/cooldown/pause and Markdown briefings.
+- [x] Scope/progress/cancel/citations/unavailability UI, event dedup/cooldown/pause and Markdown briefings.
 
 **Accept:** replay does not duplicate notifications and historical evidence stays correct.
+- Comprehensive Verification: In-app alerts engine (`AlertService`) in `src/insightbot/modules/alerts/service.py` with unique compound index on `notification_dedup_records` (`user_id`, `query_id`, `target_id`) guaranteeing complete replay idempotency (replaying evaluation over identical articles generates zero duplicate notifications). Cooldown window (1h, 6h, 24h) and pause states suppress repeated matches. Analyst assistant service (`AssistantService`) in `src/insightbot/modules/assistant/service.py` with 2000-character budget, 120s deadline, queue bounds (max 2 active/queued jobs), and cancellation support. Citation availability validation ensures deleted or quarantined target articles explicitly report unavailability (`is_valid = False`, `[المحتوى الأصلي غير متاح حالياً]`) rather than silently linking to latest or failing. Full React integration with live unread notifications bell in `Header.tsx` and interactive alert controls (toggle, pause, cooldown selector) in `WorkspaceView.tsx`. 5 dedicated unit & API tests in `tests/test_alerts_and_assistant.py`. Total backend suite reached 141 passed tests; Mypy clean (98 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T20 — Packaging and Runtime
 

@@ -191,3 +191,8 @@ class LocalEvidenceGenerationEngine:
             completion_tokens=approx_tokens,
             latency_ms=elapsed_ms,
         )
+
+
+def get_local_generation_engine() -> LocalEvidenceGenerationEngine:
+    """Return local generation engine singleton instance."""
+    return LocalEvidenceGenerationEngine()

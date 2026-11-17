@@ -8,17 +8,22 @@ from pymongo.database import Database
 from insightbot.config import Settings, get_settings
 from insightbot.infra.mongo import get_mongo_client
 from insightbot.models.user import Role, User
+from insightbot.modules.alerts.service import AlertService
 from insightbot.modules.analytics.export import ExportService
 from insightbot.modules.analytics.service import AnalyticsService
+from insightbot.modules.assistant.service import AssistantService
 from insightbot.modules.deduplication.service import DeduplicationService
+from insightbot.modules.generation.engine import get_local_generation_engine
 from insightbot.modules.generation.service import GenerationService
 from insightbot.modules.search.service import SearchService
 from insightbot.modules.stories.comparison import EventComparisonService
 from insightbot.modules.stories.service import StoryService
 from insightbot.repositories.article_repository import ArticleRepository
+from insightbot.repositories.assistant_repository import AssistantJobRepository
 from insightbot.repositories.audit_repository import AuditRepository
 from insightbot.repositories.duplicate_repository import DuplicateRepository
 from insightbot.repositories.job_repository import JobRepository
+from insightbot.repositories.notification_repository import NotificationRepository
 from insightbot.repositories.source_repository import SourceRepository
 from insightbot.repositories.user_repository import UserRepository
 from insightbot.repositories.workspace_repository import WorkspaceRepository
@@ -135,6 +140,38 @@ def get_generation_service(
 ) -> GenerationService:
     """Dependency providing GenerationService."""
     return GenerationService(db)
+
+
+def get_notification_repository(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> NotificationRepository:
+    """Dependency providing NotificationRepository."""
+    return NotificationRepository(db)
+
+
+def get_alert_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+    notif_repo: NotificationRepository = Depends(get_notification_repository),
+) -> AlertService:
+    """Dependency providing AlertService."""
+    return AlertService(db, notif_repo)
+
+
+def get_assistant_repository(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> AssistantJobRepository:
+    """Dependency providing AssistantJobRepository."""
+    return AssistantJobRepository(db)
+
+
+def get_assistant_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+    assistant_repo: AssistantJobRepository = Depends(get_assistant_repository),
+    generation_service: GenerationService = Depends(get_generation_service),
+) -> AssistantService:
+    """Dependency providing AssistantService."""
+    engine = get_local_generation_engine()
+    return AssistantService(db, assistant_repo, generation_service, engine)
 
 
 def get_current_user(

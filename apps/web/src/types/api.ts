@@ -179,6 +179,9 @@ export interface SavedQuery {
   name: string;
   query_params: Record<string, unknown>;
   alerts_enabled: boolean;
+  is_paused?: boolean;
+  cooldown_hours?: number;
+  last_alert_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -531,4 +534,69 @@ export interface StoryBriefingResponse {
   abstention_reason?: string | null;
   generated_at: string;
   is_stale: boolean;
+}
+
+// In-App Notifications & Alerts (Task T19)
+export interface InAppNotification {
+  notification_id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  notification_type:
+    | "saved_query_match"
+    | "story_update"
+    | "briefing_ready"
+    | "system_alert"
+    | string;
+  target_type: "article" | "story" | "saved_query" | string;
+  target_id: string;
+  target_version?: number | null;
+  is_read: boolean;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface NotificationSummary {
+  items: InAppNotification[];
+  total: number;
+  unread_count: number;
+}
+
+export interface AlertToggleRequest {
+  query_id: string;
+  alerts_enabled: boolean;
+  is_paused?: boolean;
+  cooldown_hours?: number;
+}
+
+// Analyst Assistant Jobs (Task T19)
+export type AssistantJobStatus = "pending" | "processing" | "completed" | "cancelled" | "failed";
+
+export interface AssistantJob {
+  job_id: string;
+  user_id: string;
+  query: string;
+  story_id?: string | null;
+  source_id?: string | null;
+  max_passages: number;
+  status: AssistantJobStatus;
+  created_at: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+  deadline_at: string;
+  result?: GenerationOutput | null;
+  error_message?: string | null;
+  cancelled_by?: string | null;
+}
+
+export interface AssistantAskRequest {
+  query: string;
+  story_id?: string | null;
+  source_id?: string | null;
+  max_passages?: number;
+}
+
+export interface AssistantJobResponse {
+  job: AssistantJob;
+  queue_position: number;
 }

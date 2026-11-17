@@ -4,6 +4,7 @@ import type { BookmarkItem, NoteItem, SavedQuery } from "../types/api";
 import {
   AlertCircle,
   AlertTriangle,
+  Bell,
   BellOff,
   Bookmark as BookmarkIcon,
   Clock,
@@ -172,6 +173,34 @@ export function WorkspaceView({ onSelectArticle, onRunSavedQuery }: WorkspaceVie
       loadSavedQueries();
     } catch {
       setError("فشل حذف الاستعلام.");
+    }
+  };
+
+  const handleToggleAlert = async (
+    queryId: string,
+    nextEnabled: boolean,
+    nextPaused: boolean,
+    cooldownHours: number = 1
+  ) => {
+    try {
+      const updated = await api.toggleQueryAlert({
+        query_id: queryId,
+        alerts_enabled: nextEnabled,
+        is_paused: nextPaused,
+        cooldown_hours: cooldownHours,
+      });
+      setSavedQueries((prev) =>
+        prev.map((q) => (q.query_id === queryId ? { ...q, ...updated } : q))
+      );
+      showNotification(
+        nextEnabled
+          ? nextPaused
+            ? "تم إيقاف تنبيهات الاستعلام مؤقتاً."
+            : "تم تفعيل تنبيهات الاستعلام بنجاح."
+          : "تم تعطيل تنبيهات الاستعلام."
+      );
+    } catch {
+      setError("فشل تحديث إعدادات التنبيه للاستعلام.");
     }
   };
 
@@ -501,10 +530,87 @@ export function WorkspaceView({ onSelectArticle, onRunSavedQuery }: WorkspaceVie
                         )}
                       </div>
 
-                      {/* Alert Delivery Warning (Disabled until T19) */}
-                      <div className="mb-4 bg-slate-50 border border-slate-200 rounded p-2 text-[11px] text-muted flex items-center space-x-1.5 space-x-reverse">
-                        <BellOff className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                        <span>التنبيهات المباشرة معطلة حالياً (مجدولة للتفعيل في مرحلة T19).</span>
+                      {/* Interactive Alert Delivery Controls (Task T19) */}
+                      <div className="mb-4 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-1.5 space-x-reverse">
+                            {sq.alerts_enabled ? (
+                              <Bell className="h-3.5 w-3.5 text-brand ml-1" />
+                            ) : (
+                              <BellOff className="h-3.5 w-3.5 text-muted ml-1" />
+                            )}
+                            <span className="font-semibold text-text">التنبيهات المباشرة:</span>
+                            <span
+                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                sq.alerts_enabled
+                                  ? sq.is_paused
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-emerald-100 text-emerald-800"
+                                  : "bg-slate-200 text-slate-600"
+                              }`}
+                            >
+                              {!sq.alerts_enabled ? "معطلة" : sq.is_paused ? "موقوفة مؤقتاً" : "نشطة"}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleToggleAlert(
+                                sq.query_id,
+                                !sq.alerts_enabled,
+                                false,
+                                sq.cooldown_hours || 1
+                              )
+                            }
+                            className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                              sq.alerts_enabled
+                                ? "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                                : "bg-brand hover:bg-brand-hover text-white"
+                            }`}
+                          >
+                            {sq.alerts_enabled ? "تعطيل" : "تفعيل"}
+                          </button>
+                        </div>
+
+                        {sq.alerts_enabled && (
+                          <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-muted">
+                            <div className="flex items-center space-x-1.5 space-x-reverse">
+                              <span>فترة التهدئة:</span>
+                              <select
+                                value={sq.cooldown_hours || 1}
+                                onChange={(e) =>
+                                  handleToggleAlert(
+                                    sq.query_id,
+                                    true,
+                                    sq.is_paused || false,
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="bg-white border border-slate-200 rounded px-1.5 py-0.5 text-[11px] text-text"
+                              >
+                                <option value={1}>ساعة واحدة</option>
+                                <option value={6}>6 ساعات</option>
+                                <option value={24}>24 ساعة</option>
+                              </select>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleToggleAlert(
+                                  sq.query_id,
+                                  true,
+                                  !sq.is_paused,
+                                  sq.cooldown_hours || 1
+                                )
+                              }
+                              className="text-brand hover:underline font-semibold"
+                            >
+                              {sq.is_paused ? "استئناف التنبيه" : "إيقاف مؤقت"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
 

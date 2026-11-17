@@ -52,6 +52,9 @@ class SavedQuery(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     query_params: dict[str, Any] = Field(default_factory=dict)
     alerts_enabled: bool = False
+    is_paused: bool = False
+    cooldown_hours: int = Field(default=1, ge=1, le=168)
+    last_alert_at: datetime | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 
@@ -62,6 +65,8 @@ class SavedQueryCreateRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     query_params: dict[str, Any] = Field(default_factory=dict)
     alerts_enabled: bool = False
+    is_paused: bool = False
+    cooldown_hours: int = Field(default=1, ge=1, le=168)
 
 
 class PrivateNote(BaseModel):

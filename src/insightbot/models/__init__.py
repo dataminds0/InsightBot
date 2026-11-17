@@ -8,6 +8,12 @@ from insightbot.models.analytics import (
     TimelinePoint,
 )
 from insightbot.models.article import Article, ArticleRevision, compute_content_hash
+from insightbot.models.assistant import (
+    AssistantAskRequest,
+    AssistantJob,
+    AssistantJobResponse,
+    AssistantJobStatus,
+)
 from insightbot.models.audit import AuditLog
 from insightbot.models.comparison import (
     AnalystReview,
@@ -39,6 +45,11 @@ from insightbot.models.generation import (
     StructuredClaim,
 )
 from insightbot.models.job import Job, JobStatus
+from insightbot.models.notifications import (
+    AlertToggleRequest,
+    InAppNotification,
+    NotificationSummary,
+)
 from insightbot.models.search import (
     SearchGeneration,
     SearchMode,
@@ -67,8 +78,13 @@ from insightbot.models.workspace import (
 __all__ = [
     "AnalystReview",
     "AnalyticsOverviewReport",
+    "AlertToggleRequest",
     "Article",
     "ArticleRevision",
+    "AssistantAskRequest",
+    "AssistantJob",
+    "AssistantJobResponse",
+    "AssistantJobStatus",
     "AttributedDifference",
     "AuditLog",
     "Bookmark",
@@ -88,10 +104,12 @@ __all__ = [
     "FetchRecord",
     "GenerationInput",
     "GenerationOutput",
+    "InAppNotification",
     "Job",
     "JobStatus",
     "LanguageDistributionMetric",
     "NoteItem",
+    "NotificationSummary",
     "PrivateNote",
     "ReviewStoryRequest",
     "Role",

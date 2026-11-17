@@ -115,7 +115,12 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-canvas text-text" dir="rtl">
-      <Header currentTab={currentTab} onTabChange={handleTabChange} />
+      <Header
+        currentTab={currentTab}
+        onTabChange={handleTabChange}
+        onSelectArticle={handleSelectArticle}
+        onSelectStory={handleOpenComparison}
+      />
 
       <main className="pb-16">
         {selectedArticleId ? (
