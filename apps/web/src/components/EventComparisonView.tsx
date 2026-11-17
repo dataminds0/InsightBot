@@ -3,6 +3,8 @@ import { useAuth } from "../context/AuthContext";
 import { api, ApiClientError } from "../lib/api";
 import type {
   EventComparisonReport,
+  GenerationOutput,
+  StoryBriefingResponse,
   StoryItem,
 } from "../types/api";
 import {
@@ -18,7 +20,9 @@ import {
   Quote,
   RefreshCw,
   Scale,
+  Send,
   ShieldAlert,
+  Sparkles,
   UserCheck,
 } from "lucide-react";
 
@@ -42,16 +46,66 @@ export function EventComparisonView({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Active Tab: "perspectives" | "timeline" | "divergences" | "evidence"
-  const [activeTab, setActiveTab] = useState<"perspectives" | "timeline" | "divergences" | "evidence">(
-    "perspectives"
-  );
+  // Active Tab: "perspectives" | "timeline" | "divergences" | "evidence" | "briefing"
+  const [activeTab, setActiveTab] = useState<
+    "perspectives" | "timeline" | "divergences" | "evidence" | "briefing"
+  >("perspectives");
+
+  // Briefing and QA State (Task T18)
+  const [briefing, setBriefing] = useState<StoryBriefingResponse | null>(null);
+  const [isLoadingBriefing, setIsLoadingBriefing] = useState(false);
+  const [briefingError, setBriefingError] = useState<string | null>(null);
+
+  const [analystQuestion, setAnalystQuestion] = useState("");
+  const [qaAnswer, setQaAnswer] = useState<GenerationOutput | null>(null);
+  const [isAskingQa, setIsAskingQa] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
 
   // Review Form State
   const [reviewStatus, setReviewStatus] = useState<"verified" | "flagged" | "in_dispute">("verified");
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewFeedback, setReviewFeedback] = useState<string | null>(null);
+
+  const loadStoryBriefing = async (storyId: string) => {
+    setIsLoadingBriefing(true);
+    setBriefingError(null);
+    try {
+      const bData = await api.getStoryBriefing(storyId);
+      setBriefing(bData);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setBriefingError(err.message);
+      } else {
+        setBriefingError("فشل توليد الإيجاز الإخباري للحدث.");
+      }
+    } finally {
+      setIsLoadingBriefing(false);
+    }
+  };
+
+  const handleAskQuestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!analystQuestion.trim()) return;
+    setIsAskingQa(true);
+    setQaError(null);
+    try {
+      const res = await api.askGenerationQuestion({
+        query: analystQuestion.trim(),
+        story_id: selectedStoryId || undefined,
+        max_passages: 6,
+      });
+      setQaAnswer(res);
+    } catch (err) {
+      if (err instanceof ApiClientError) {
+        setQaError(err.message);
+      } else {
+        setQaError("فشل تنفيذ الاستعلام التحليلي الموثق.");
+      }
+    } finally {
+      setIsAskingQa(false);
+    }
+  };
 
   // Load available stories for the selector
   useEffect(() => {
@@ -91,8 +145,11 @@ export function EventComparisonView({
   useEffect(() => {
     if (selectedStoryId) {
       loadComparison(selectedStoryId);
+      if (activeTab === "briefing") {
+        loadStoryBriefing(selectedStoryId);
+      }
     }
-  }, [selectedStoryId]);
+  }, [selectedStoryId, activeTab]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -330,6 +387,24 @@ export function EventComparisonView({
             >
               <UserCheck className="h-4 w-4 ml-1" />
               <span>الأدلة والمراجعة التحليلية</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("briefing");
+                if (!briefing && selectedStoryId) {
+                  loadStoryBriefing(selectedStoryId);
+                }
+              }}
+              className={`pb-3 px-1 border-b-2 transition-colors flex items-center space-x-2 space-x-reverse ${
+                activeTab === "briefing"
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted hover:text-text"
+              }`}
+            >
+              <Sparkles className="h-4 w-4 ml-1" />
+              <span>الإيجاز الذكي والأسئلة (T18)</span>
             </button>
           </div>
 
@@ -665,6 +740,279 @@ export function EventComparisonView({
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: Local Evidence-backed Generation & Briefing (Task T18) */}
+          {activeTab === "briefing" && (
+            <div className="space-y-8">
+              {/* Top Card: Story Briefing */}
+              <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-border">
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="p-2.5 bg-brand-light rounded-xl text-brand">
+                      <Sparkles className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2 space-x-reverse">
+                        <h2 className="text-lg font-bold text-text">الإيجاز الإخباري الموثق بالأدلة</h2>
+                        <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">
+                          100% محلي دون خدمات سحابية
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted mt-1">
+                        توليد إخباري تحليلي مدعوم باقتباسات حرفية وأرقام إصدارات محددة من مقالات الحدث المجمعة.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => selectedStoryId && loadStoryBriefing(selectedStoryId)}
+                    disabled={isLoadingBriefing}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-text rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 space-x-reverse transition-colors self-start sm:self-center"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${isLoadingBriefing ? "animate-spin" : ""}`} />
+                    <span>تحديث الإيجاز</span>
+                  </button>
+                </div>
+
+                {isLoadingBriefing && (
+                  <div className="py-12 text-center">
+                    <RefreshCw className="h-7 w-7 text-brand animate-spin mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-text">جاري صياغة الإيجاز المحلي والتحقق من الأدلة...</p>
+                  </div>
+                )}
+
+                {!isLoadingBriefing && briefingError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3 space-x-reverse text-sm text-negative">
+                    <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 ml-2" />
+                    <div>
+                      <p className="font-bold">تعذر استرجاع الإيجاز الذكي:</p>
+                      <p className="text-xs text-muted mt-1">{briefingError}</p>
+                    </div>
+                  </div>
+                )}
+
+                {!isLoadingBriefing && briefing && (
+                  <div>
+                    {/* Briefing Meta & Badges */}
+                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded text-xs font-bold">
+                        إصدار الحدث: v{briefing.story_version}
+                      </span>
+                      {briefing.is_stale && (
+                        <span className="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-xs font-bold flex items-center space-x-1 space-x-reverse">
+                          <AlertTriangle className="h-3 w-3 ml-1" />
+                          <span>توجد مقالات جديدة منذ آخر توليد للإيجاز</span>
+                        </span>
+                      )}
+                      <span className="text-xs text-muted mr-auto">
+                        تاريخ التوليد: {formatDateTime(briefing.generated_at)}
+                      </span>
+                    </div>
+
+                    {/* Abstention State or Briefing Content */}
+                    {briefing.abstained ? (
+                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl mb-6">
+                        <div className="flex items-center space-x-2 space-x-reverse mb-2">
+                          <AlertCircle className="h-5 w-5 text-amber-700 ml-1" />
+                          <h4 className="font-bold text-amber-900 text-sm">امتناع منضبط لعدم كفاية الشواهد الموثقة</h4>
+                        </div>
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          {briefing.abstention_reason || "لم تتوفر مقالات كافية تفي بمعايير الاقتباس والتحقق المستقل لصياغة إيجاز موثوق دون تخمين."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="prose prose-sm max-w-none text-text whitespace-pre-wrap font-sans leading-relaxed">
+                          {briefing.briefing_markdown}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Structured Claims */}
+                    {briefing.claims && briefing.claims.length > 0 && (
+                      <div className="mb-6">
+                        <h4 className="font-bold text-xs text-text uppercase tracking-wider mb-3">الادعاءات المستخلصة وحالة التوثيق:</h4>
+                        <div className="space-y-2">
+                          {briefing.claims.map((clm, cIdx) => (
+                            <div
+                              key={cIdx}
+                              className="p-3 bg-white border border-border rounded-lg text-xs flex items-start justify-between gap-3"
+                            >
+                              <div className="flex items-start space-x-2 space-x-reverse">
+                                {clm.has_support ? (
+                                  <CheckCircle2 className="h-4 w-4 text-positive shrink-0 mt-0.5 ml-1" />
+                                ) : (
+                                  <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5 ml-1" />
+                                )}
+                                <span className="text-text font-medium">{clm.claim_text}</span>
+                              </div>
+                              <span
+                                className={`text-[10px] px-2 py-0.5 rounded font-bold shrink-0 ${
+                                  clm.has_support
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : "bg-amber-50 text-amber-700 border border-amber-200"
+                                }`}
+                              >
+                                {clm.has_support ? `${clm.citations.length} شواهد` : "غير موثق"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Citations List */}
+                    {briefing.citations && briefing.citations.length > 0 && (
+                      <div>
+                        <div className="flex items-center space-x-2 space-x-reverse mb-3">
+                          <Quote className="h-4 w-4 text-brand ml-1" />
+                          <h4 className="font-bold text-xs text-text uppercase tracking-wider">
+                            الاستشهادات والاقتباسات الحرفية المدعومة ({briefing.citations.length}):
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {briefing.citations.map((cit, idx) => (
+                            <div
+                              key={cit.citation_id || idx}
+                              className="p-3 bg-white border border-border rounded-lg text-xs flex flex-col justify-between shadow-2xs"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2 space-x-reverse">
+                                  <span className="font-bold text-brand bg-brand-light px-2 py-0.5 rounded">
+                                    {cit.source_id}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => onSelectArticle(cit.article_id)}
+                                    className="font-mono text-muted text-[11px] hover:text-brand hover:underline"
+                                    title="عرض المقال"
+                                  >
+                                    {cit.article_id}:v{cit.version}
+                                  </button>
+                                </div>
+                                <a
+                                  href={cit.canonical_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-brand hover:underline flex items-center space-x-1 space-x-reverse text-[11px]"
+                                >
+                                  <span>المصدر الأصلي</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                              <p className="text-text font-serif italic bg-slate-50 p-2 rounded border border-slate-100">
+                                "{cit.quote}"
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Card: Analyst Targeted Q&A */}
+              <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center space-x-3 space-x-reverse mb-4">
+                  <div className="p-2.5 bg-slate-100 rounded-xl text-text">
+                    <Quote className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base text-text">استفسار تحليلي موثق حول هذا الحدث</h3>
+                    <p className="text-xs text-muted">
+                      طرح سؤال محدد لاستخلاص إجابة مدعومة باقتباسات موثقة من مقالات الحدث فقط مع حماية كاملة من الهلوسة.
+                    </p>
+                  </div>
+                </div>
+
+                {!isAnalystOrAdmin ? (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-muted">
+                    طرح الأسئلة التحليلية المخصصة وتوليد الإجابات الموثقة متاح للمحللين والمسؤولين (Analyst / Admin).
+                  </div>
+                ) : (
+                  <div>
+                    <form onSubmit={handleAskQuestion} className="flex gap-3 mb-6">
+                      <input
+                        type="text"
+                        value={analystQuestion}
+                        onChange={(e) => setAnalystQuestion(e.target.value)}
+                        placeholder="اطرح سؤالاً تحليلياً عن الحدث (مثال: ما هي حصيلة الضحايا بحسب المصادر المختلفة؟)"
+                        className="flex-1 py-2.5 px-3 border border-border rounded-lg text-sm bg-canvas text-text focus:ring-2 focus:ring-focus"
+                        disabled={isAskingQa}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isAskingQa || !analystQuestion.trim()}
+                        className="px-5 py-2.5 bg-brand hover:bg-brand-hover text-white rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 space-x-reverse transition-colors disabled:opacity-50"
+                      >
+                        {isAskingQa ? (
+                          <RefreshCw className="h-4 w-4 animate-spin ml-1" />
+                        ) : (
+                          <Send className="h-4 w-4 ml-1" />
+                        )}
+                        <span>استعلام</span>
+                      </button>
+                    </form>
+
+                    {qaError && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-xs text-negative mb-4">
+                        {qaError}
+                      </div>
+                    )}
+
+                    {qaAnswer && (
+                      <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+                        <div className="flex items-center justify-between text-xs text-muted border-b border-slate-200 pb-2">
+                          <span className="font-bold text-text">نتيجة التحليل للاستفسار:</span>
+                          <div className="flex items-center space-x-3 space-x-reverse text-[11px]">
+                            <span>النموذج: {qaAnswer.model_name}</span>
+                            <span>الشواهد: {qaAnswer.passages_used}</span>
+                            <span>الزمن: {qaAnswer.latency_ms} ms</span>
+                          </div>
+                        </div>
+
+                        {qaAnswer.abstained ? (
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900">
+                            <span className="font-bold block mb-1">امتناع منضبط عن الإجابة:</span>
+                            {qaAnswer.abstention_reason || "لا توجد شواهد كافية في مقالات الحدث للإجابة على هذا السؤال بشكل موثق."}
+                          </div>
+                        ) : (
+                          <div className="prose prose-sm max-w-none text-text whitespace-pre-wrap font-sans text-xs leading-relaxed bg-white p-4 rounded-lg border border-slate-200">
+                            {qaAnswer.answer_markdown}
+                          </div>
+                        )}
+
+                        {qaAnswer.citations && qaAnswer.citations.length > 0 && (
+                          <div className="pt-2">
+                            <span className="text-[11px] font-bold text-muted block mb-2">الشواهد المقتبسة:</span>
+                            <div className="space-y-2">
+                              {qaAnswer.citations.map((c, idx) => (
+                                <div key={idx} className="p-2 bg-white rounded border border-slate-200 text-xs">
+                                  <div className="flex items-center justify-between text-[11px] text-muted mb-1">
+                                    <span className="font-bold text-brand">{c.source_id}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => onSelectArticle(c.article_id)}
+                                      className="font-mono hover:underline"
+                                    >
+                                      {c.article_id}:v{c.version}
+                                    </button>
+                                  </div>
+                                  <p className="italic text-slate-700 font-serif">"{c.quote}"</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

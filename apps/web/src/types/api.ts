@@ -478,3 +478,57 @@ export interface AnalyticsOverviewReport {
 }
 
 export type ExportFormat = "csv" | "jsonl" | "markdown";
+
+// Local Evidence-backed Generation (Task T18)
+export interface Citation {
+  citation_id: string;
+  article_id: string;
+  version: number;
+  source_id: string;
+  quote: string;
+  canonical_url: string;
+  is_valid: boolean;
+}
+
+export interface StructuredClaim {
+  claim_text: string;
+  citations: Citation[];
+  has_support: boolean;
+}
+
+export interface GenerationInput {
+  query: string;
+  story_id?: string | null;
+  source_id?: string | null;
+  max_passages?: number;
+}
+
+export interface GenerationOutput {
+  generation_id: string;
+  query: string;
+  answer_markdown: string;
+  claims: StructuredClaim[];
+  citations: Citation[];
+  abstained: boolean;
+  abstention_reason?: string | null;
+  passages_used: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  latency_ms: number;
+  model_name: string;
+  is_stale: boolean;
+  generated_at: string;
+}
+
+export interface StoryBriefingResponse {
+  story_id: string;
+  story_title: string;
+  story_version: number;
+  briefing_markdown: string;
+  claims: StructuredClaim[];
+  citations: Citation[];
+  abstained: boolean;
+  abstention_reason?: string | null;
+  generated_at: string;
+  is_stale: boolean;
+}

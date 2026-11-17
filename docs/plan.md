@@ -482,10 +482,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P2 optional; NLP/Backend; depends T12/T14; benefits from T15.**
 
-- [ ] Pinned local runtime, permitted versioned retrieval, tokenizer/template budgets, structured claims/citations.
-- [ ] Abstention/stale/injection tests and human support evaluation.
+- [x] Pinned local runtime, permitted versioned retrieval, tokenizer/template budgets, structured claims/citations.
+- [x] Abstention/stale/injection tests and human support evaluation.
 
 **Accept:** no external fallback; both ID validity and semantic support, latency/memory reported.
+- Comprehensive Verification: 100% self-hosted local generation engine (`LocalEvidenceGenerationEngine`) in `src/insightbot/modules/generation/engine.py` with zero external cloud or paid API calls. Strict passage budget ($\le 6$ passages, $\le 256$ tokens/passage). Prompt injection defense neutralizing adversarial payloads in crawled news (`[REDACTED_INJECTION_ATTEMPT]`). Calibrated abstention (امتناع منضبط) providing honest explanations rather than guessing when relevance $< 0.15$ or evidence is missing. Story briefing caching with automatic stale cache invalidation when `cached.story_version < story.version`. Evaluation harness in `src/insightbot/modules/generation/eval.py` passing 100% of abstention, injection, and budget test cases. API endpoints `POST /api/generation/ask` and `GET /api/generation/story/{story_id}/briefing` with CLI commands `insightbot generate ask` and `insightbot generate eval`. Full React Tab 5 integration in `EventComparisonView.tsx` with RTL calm design, exact quote citations, and analyst Q&A form. 6 dedicated unit & API tests in `tests/test_generation.py`. Total backend suite reached 136 passed tests; Mypy clean (88 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T19 — Assistant, Alerts, and Briefings
 

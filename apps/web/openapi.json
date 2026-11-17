@@ -4816,6 +4816,189 @@
         }
       }
     },
+    "/api/generation/ask": {
+      "post": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Ask Question",
+        "description": "Analyst analytical question answering backed by verifiable evidence citations.\nEnforces calibrated abstention when evidence in the archive is insufficient.",
+        "operationId": "ask_question_api_generation_ask_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerationOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/generation/story/{story_id}/briefing": {
+      "get": {
+        "tags": [
+          "generation"
+        ],
+        "summary": "Get Story Briefing",
+        "description": "Retrieve or synthesize a structured factual briefing for an event story cluster.\nGuarantees stale cache invalidation when story version changes.",
+        "operationId": "get_story_briefing_api_generation_story__story_id__briefing_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryBriefingResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/health": {
       "get": {
         "summary": "Health Check",
@@ -5479,6 +5662,50 @@
         "title": "BookmarkCreateRequest",
         "description": "Request payload to create a bookmark."
       },
+      "Citation": {
+        "properties": {
+          "citation_id": {
+            "type": "string",
+            "title": "Citation Id"
+          },
+          "article_id": {
+            "type": "string",
+            "title": "Article Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote",
+            "description": "Exact verified quote from publisher body text"
+          },
+          "canonical_url": {
+            "type": "string",
+            "title": "Canonical Url",
+            "default": ""
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "article_id",
+          "source_id",
+          "quote"
+        ],
+        "title": "Citation",
+        "description": "Verifiable citation pointing to an exact immutable article version.\nGuarantees citation IDs exist and quotes match original publisher text."
+      },
       "DivergenceCategory": {
         "type": "string",
         "enum": [
@@ -5592,6 +5819,143 @@
         ],
         "title": "ExportFormat",
         "description": "Allowed export formats."
+      },
+      "GenerationInput": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Query",
+            "description": "Analytical query"
+          },
+          "story_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Story Id",
+            "description": "Optional target story cluster"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id",
+            "description": "Optional source filter"
+          },
+          "max_passages": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Passages",
+            "description": "Strict context budget",
+            "default": 6
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "GenerationInput",
+        "description": "Input payload for evidence-backed generation."
+      },
+      "GenerationOutput": {
+        "properties": {
+          "generation_id": {
+            "type": "string",
+            "title": "Generation Id"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "answer_markdown": {
+            "type": "string",
+            "title": "Answer Markdown"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/StructuredClaim"
+            },
+            "type": "array",
+            "title": "Claims"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "abstained": {
+            "type": "boolean",
+            "title": "Abstained",
+            "default": false
+          },
+          "abstention_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstention Reason"
+          },
+          "passages_used": {
+            "type": "integer",
+            "title": "Passages Used",
+            "default": 0
+          },
+          "prompt_tokens": {
+            "type": "integer",
+            "title": "Prompt Tokens",
+            "default": 0
+          },
+          "completion_tokens": {
+            "type": "integer",
+            "title": "Completion Tokens",
+            "default": 0
+          },
+          "latency_ms": {
+            "type": "integer",
+            "title": "Latency Ms",
+            "default": 0
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name",
+            "default": "insightbot-local-v1"
+          },
+          "is_stale": {
+            "type": "boolean",
+            "title": "Is Stale",
+            "default": false
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "answer_markdown"
+        ],
+        "title": "GenerationOutput",
+        "description": "Output envelope for local evidence-backed generation with abstention."
       },
       "HTTPValidationError": {
         "properties": {
@@ -6826,6 +7190,75 @@
         "title": "StoryAuditAction",
         "description": "Auditable operations performed on story clusters."
       },
+      "StoryBriefingResponse": {
+        "properties": {
+          "story_id": {
+            "type": "string",
+            "title": "Story Id"
+          },
+          "story_title": {
+            "type": "string",
+            "title": "Story Title"
+          },
+          "story_version": {
+            "type": "integer",
+            "title": "Story Version"
+          },
+          "briefing_markdown": {
+            "type": "string",
+            "title": "Briefing Markdown"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/StructuredClaim"
+            },
+            "type": "array",
+            "title": "Claims"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "abstained": {
+            "type": "boolean",
+            "title": "Abstained",
+            "default": false
+          },
+          "abstention_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abstention Reason"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "is_stale": {
+            "type": "boolean",
+            "title": "Is Stale",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_id",
+          "story_title",
+          "story_version",
+          "briefing_markdown"
+        ],
+        "title": "StoryBriefingResponse",
+        "description": "Structured factual briefing for an event story cluster."
+      },
       "StoryListResponse": {
         "properties": {
           "items": {
@@ -6894,6 +7327,32 @@
         ],
         "title": "StoryStatusDistribution",
         "description": "Distribution of stories across lifecycle stages."
+      },
+      "StructuredClaim": {
+        "properties": {
+          "claim_text": {
+            "type": "string",
+            "title": "Claim Text"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "has_support": {
+            "type": "boolean",
+            "title": "Has Support",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim_text"
+        ],
+        "title": "StructuredClaim",
+        "description": "A factual claim generated by the model paired with its supporting citations."
       },
       "TimelineMilestone": {
         "properties": {

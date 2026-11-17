@@ -11,6 +11,7 @@ from insightbot.models.user import Role, User
 from insightbot.modules.analytics.export import ExportService
 from insightbot.modules.analytics.service import AnalyticsService
 from insightbot.modules.deduplication.service import DeduplicationService
+from insightbot.modules.generation.service import GenerationService
 from insightbot.modules.search.service import SearchService
 from insightbot.modules.stories.comparison import EventComparisonService
 from insightbot.modules.stories.service import StoryService
@@ -127,6 +128,13 @@ def get_export_service(
 ) -> ExportService:
     """Dependency providing ExportService."""
     return ExportService(db)
+
+
+def get_generation_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> GenerationService:
+    """Dependency providing GenerationService."""
+    return GenerationService(db)
 
 
 def get_current_user(

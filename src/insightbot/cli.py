@@ -52,6 +52,7 @@ eval_app = typer.Typer(help="Multilingual evaluation, gold corpus, and quality r
 dedup_app = typer.Typer(help="Deduplication and syndication analysis commands.")
 stories_app = typer.Typer(help="Story clusters, lifecycle, and event timeline commands.")
 search_app = typer.Typer(help="Hybrid, Lexical, and Vector search commands.")
+generate_app = typer.Typer(help="Evidence-backed generation and evaluation commands.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
@@ -62,6 +63,7 @@ app.add_typer(eval_app, name="eval")
 app.add_typer(dedup_app, name="dedup")
 app.add_typer(stories_app, name="stories")
 app.add_typer(search_app, name="search")
+app.add_typer(generate_app, name="generate")
 
 
 @config_app.command(name="init")
@@ -1226,6 +1228,61 @@ def search_eval() -> None:
     typer.echo(f"CORE SURVIVES SEARCH STOPPED (BASIC FALLBACK): VERIFIED ({fallback_res.search_mode.value})")
     typer.echo("STALE-WRITE & POLICY GUARD ENFORCEMENT:       VERIFIED")
     typer.echo(f"ACCEPTANCE CRITERIA VERDICT:                  {'PASS' if gate_passed else 'FAIL'}")
+    typer.echo("=" * 80 + "\n")
+
+
+@generate_app.command(name="ask")
+def generate_ask(
+    query: str = typer.Argument(..., help="Analytical query to answer with evidence"),
+    story_id: Optional[str] = typer.Option(None, "--story", help="Target story ID"),
+    limit: int = typer.Option(6, "--limit", help="Max context passages to retrieve (<= 10)"),
+) -> None:
+    """Answer analytical research query with verified evidence citations and calibrated abstention."""
+    from insightbot.models.generation import GenerationInput
+    from insightbot.modules.generation.service import GenerationService
+
+    settings = get_settings()
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = GenerationService(db)
+
+    gen_input = GenerationInput(query=query, story_id=story_id, max_passages=limit)
+    output = service.ask_question(gen_input)
+
+    typer.echo(f"\n{'=' * 80}")
+    typer.echo(f"LOCAL EVIDENCE-BACKED GENERATION: {query}")
+    typer.echo(f"Abstained: {output.abstained} | Passages Used: {output.passages_used} | Latency: {output.latency_ms} ms")
+    if output.abstained:
+        typer.echo(f"Abstention Reason: {output.abstention_reason}")
+    typer.echo(f"{'=' * 80}\n")
+
+    typer.echo(output.answer_markdown)
+    typer.echo(f"\n{'=' * 80}\n")
+    client.close()
+
+
+@generate_app.command(name="eval")
+def generate_eval() -> None:
+    """Evaluate abstention calibration, prompt injection defense, and citation validity."""
+    from insightbot.modules.generation.engine import LocalEvidenceGenerationEngine
+    from insightbot.modules.generation.eval import evaluate_generation_system
+
+    engine = LocalEvidenceGenerationEngine()
+    results = evaluate_generation_system(engine)
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("         LOCAL EVIDENCE-BACKED GENERATION EVALUATION REPORT")
+    typer.echo("=" * 80)
+    typer.echo(f"Abstention Tests:      {results['abstention_tests_passed']}/{results['abstention_tests_total']} passed")
+    typer.echo(f"Injection Defenses:    {results['injection_tests_passed']}/{results['injection_tests_total']} passed")
+    typer.echo(f"Passage Budget Tests:  {results['budget_tests_passed']}/{results['budget_tests_total']} passed")
+    typer.echo("-" * 80)
+    all_passed = (
+        results["abstention_tests_passed"] == results["abstention_tests_total"]
+        and results["injection_tests_passed"] == results["injection_tests_total"]
+        and results["budget_tests_passed"] == results["budget_tests_total"]
+    )
+    typer.echo(f"ACCEPTANCE CRITERIA:   {'PASS' if all_passed else 'FAIL'}")
     typer.echo("=" * 80 + "\n")
 
 

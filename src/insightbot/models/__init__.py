@@ -31,6 +31,13 @@ from insightbot.models.export import (
     ExportTarget,
 )
 from insightbot.models.fetch import FetchRecord
+from insightbot.models.generation import (
+    Citation,
+    GenerationInput,
+    GenerationOutput,
+    StoryBriefingResponse,
+    StructuredClaim,
+)
 from insightbot.models.job import Job, JobStatus
 from insightbot.models.search import (
     SearchGeneration,
@@ -66,6 +73,7 @@ __all__ = [
     "AuditLog",
     "Bookmark",
     "BookmarkItem",
+    "Citation",
     "DivergenceCategory",
     "DuplicateEvidence",
     "DuplicateRelationship",
@@ -78,6 +86,8 @@ __all__ = [
     "ExportManifest",
     "ExportTarget",
     "FetchRecord",
+    "GenerationInput",
+    "GenerationOutput",
     "Job",
     "JobStatus",
     "LanguageDistributionMetric",
@@ -98,9 +108,11 @@ __all__ = [
     "Story",
     "StoryAudit",
     "StoryAuditAction",
+    "StoryBriefingResponse",
     "StorySnapshot",
     "StoryStatus",
     "StoryStatusDistribution",
+    "StructuredClaim",
     "TimelineMilestone",
     "TimelinePoint",
     "User",
