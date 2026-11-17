@@ -2018,6 +2018,384 @@
         }
       }
     },
+    "/api/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Execute Search",
+        "description": "Execute multilingual Hybrid search with Reciprocal Rank Fusion (RRF).\nGuarantees strict projection (no full body_text) and graceful Basic fallback.",
+        "operationId": "execute_search_api_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "description": "Search terms or semantic query",
+              "title": "Q"
+            },
+            "description": "Search terms or semantic query"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SearchMode",
+              "description": "Search mode: auto, hybrid, lexical, basic",
+              "default": "auto"
+            },
+            "description": "Search mode: auto, hybrid, lexical, basic"
+          },
+          {
+            "name": "source_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by publisher source ID",
+              "title": "Source Id"
+            },
+            "description": "Filter by publisher source ID"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by language code (ar, en, ru)",
+              "title": "Language"
+            },
+            "description": "Filter by language code (ar, en, ru)"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Earliest publication date (UTC)",
+              "title": "Start Date"
+            },
+            "description": "Earliest publication date (UTC)"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Latest publication date (UTC)",
+              "title": "End Date"
+            },
+            "description": "Latest publication date (UTC)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Page result limit",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Page result limit"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Deterministic pagination cursor",
+              "title": "Cursor"
+            },
+            "description": "Deterministic pagination cursor"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/rebuild": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Rebuild Search Index",
+        "description": "Trigger rebuild of an immutable search index generation with atomic alias swap.\nRestricted to Analyst or Admin roles.",
+        "operationId": "rebuild_search_index_api_search_rebuild_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchGeneration"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/status": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Get Search Status",
+        "description": "Retrieve active search generation metadata, vector dimensions, and index lag.",
+        "operationId": "get_search_status_api_search_status_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Search Status Api Search Status Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/stories": {
       "get": {
         "tags": [
@@ -4755,6 +5133,249 @@
         ],
         "title": "SavedQueryCreateRequest",
         "description": "Request payload to create a saved query."
+      },
+      "SearchGeneration": {
+        "properties": {
+          "generation_id": {
+            "type": "string",
+            "title": "Generation Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "default": false
+          },
+          "article_count": {
+            "type": "integer",
+            "title": "Article Count",
+            "default": 0
+          },
+          "chunks_count": {
+            "type": "integer",
+            "title": "Chunks Count",
+            "default": 0
+          },
+          "vector_dimensions": {
+            "type": "integer",
+            "title": "Vector Dimensions",
+            "default": 384
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "activated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activated At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "valid"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "title": "SearchGeneration",
+        "description": "Metadata for an immutable search index generation with atomic alias swap."
+      },
+      "SearchMode": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "hybrid",
+          "lexical",
+          "basic",
+          "basic_fallback"
+        ],
+        "title": "SearchMode",
+        "description": "Operational mode of the search engine."
+      },
+      "SearchResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "search_mode": {
+            "$ref": "#/components/schemas/SearchMode"
+          },
+          "index_generation": {
+            "type": "string",
+            "title": "Index Generation"
+          },
+          "index_lag_seconds": {
+            "type": "number",
+            "title": "Index Lag Seconds",
+            "default": 0.0
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "search_mode",
+          "index_generation",
+          "query"
+        ],
+        "title": "SearchResponse",
+        "description": "Paginated search response with provenance, generation identifier, and index lag."
+      },
+      "SearchResultItem": {
+        "properties": {
+          "article_id": {
+            "type": "string",
+            "title": "Article Id"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "canonical_url": {
+            "type": "string",
+            "title": "Canonical Url"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "fetched_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fetched At"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count",
+            "default": 0
+          },
+          "reading_time_minutes": {
+            "type": "integer",
+            "title": "Reading Time Minutes",
+            "default": 1
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "default": 0.0
+          },
+          "lexical_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lexical Rank"
+          },
+          "vector_rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vector Rank"
+          },
+          "rrf_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rrf Score"
+          },
+          "snippet": {
+            "type": "string",
+            "title": "Snippet",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "article_id",
+          "source_id",
+          "canonical_url",
+          "title",
+          "language",
+          "fetched_at"
+        ],
+        "title": "SearchResultItem",
+        "description": "Search result item with relevance scores and strict short projection.\nStrictly omits full body_text to defend against memory exhaustion (Defect A12)."
       },
       "Source": {
         "properties": {

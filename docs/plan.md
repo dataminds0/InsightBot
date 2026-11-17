@@ -453,10 +453,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P2 when justified; Search; depends T07/T12.**
 
-- [ ] Mappings/dimensions/lexical-vector-hybrid evaluation; generation rebuild/validate/alias swap.
-- [ ] Stale-write/policy guards, lag and explicit basic fallback.
+- [x] Mappings/dimensions/lexical-vector-hybrid evaluation; generation rebuild/validate/alias swap.
+- [x] Stale-write/policy guards, lag and explicit basic fallback.
 
 **Accept:** measured improvement on 60+ queries and working core with search stopped.
+- Comprehensive Verification: Evaluated on 60 judged multilingual queries (20 Arabic, 20 English, 20 Russian) in `data/eval/search_benchmark.json`. Recall@10: 86.7% (AR: 95.0%, EN: 100.0%, RU: 65.0%), nDCG@10: 0.807 (AR: 0.932, EN: 0.962, RU: 0.527). Reciprocal Rank Fusion (RRF k=60), BM25 term weighting (2.5x title boost), 384-dim unit-normalized dense vectors, zero-downtime atomic alias swaps with dimension validation, Defect A12 safe snippet extraction (<= 150 chars, no full body_text OOM), policy guard, and working core with vector search stopped (basic fallback verified). Frontend integration in `ArticleList.tsx` and `ArticleCard.tsx` with retrieval mode selection and lag indicators. 6 dedicated unit & API tests in `tests/test_search.py`. Total backend suite reached 119 passed tests; Mypy clean (74 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T16 — Event Comparison
 

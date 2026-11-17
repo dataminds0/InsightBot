@@ -4,9 +4,11 @@ import { BookOpen, Calendar, ChevronLeft, Globe, Shield } from "lucide-react";
 interface ArticleCardProps {
   article: ArticleListItem;
   onSelect: (articleId: string) => void;
+  snippet?: string;
+  score?: number;
 }
 
-export function ArticleCard({ article, onSelect }: ArticleCardProps) {
+export function ArticleCard({ article, onSelect, snippet, score }: ArticleCardProps) {
   const formatDate = (isoString?: string | null) => {
     if (!isoString) return null;
     try {
@@ -59,6 +61,11 @@ export function ArticleCard({ article, onSelect }: ArticleCardProps) {
           </div>
 
           <div className="flex items-center space-x-2 space-x-reverse">
+            {score !== undefined && (
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold px-2 py-0.5 rounded">
+                تطابق: {score.toFixed(3)}
+              </span>
+            )}
             {article.current_version > 1 && (
               <span className="bg-amber-100 text-amber-800 text-[11px] font-semibold px-1.5 py-0.5 rounded">
                 محدث (v{article.current_version})
@@ -77,6 +84,14 @@ export function ArticleCard({ article, onSelect }: ArticleCardProps) {
         >
           <bdi>{article.title}</bdi>
         </h3>
+
+        {/* Search Snippet (Defect A12 prevention: dynamic safe snippet instead of full body) */}
+        {snippet && (
+          <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-text/85 leading-relaxed font-sans line-clamp-3">
+            <span className="font-semibold text-brand ml-1">مقتطف من المحتوى:</span>
+            <span>{snippet}</span>
+          </div>
+        )}
 
         {/* Reading Time & NLP State (Defect A14 & Unknown Sentiment disambiguation) */}
         <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted">

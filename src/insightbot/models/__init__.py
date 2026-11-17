@@ -10,6 +10,12 @@ from insightbot.models.duplicate import (
 )
 from insightbot.models.fetch import FetchRecord
 from insightbot.models.job import Job, JobStatus
+from insightbot.models.search import (
+    SearchGeneration,
+    SearchMode,
+    SearchResponse,
+    SearchResultItem,
+)
 from insightbot.models.source import Source, SourcePolicy
 from insightbot.models.story import (
     EntityCategory,
@@ -48,6 +54,10 @@ __all__ = [
     "PrivateNote",
     "Role",
     "SavedQuery",
+    "SearchGeneration",
+    "SearchMode",
+    "SearchResponse",
+    "SearchResultItem",
     "Session",
     "Source",
     "SourcePolicy",

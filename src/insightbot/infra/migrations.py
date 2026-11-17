@@ -240,6 +240,32 @@ INDEX_SPECS: dict[str, list[dict[str, Any]]] = {
             "name": "idx_entities_text",
         },
     ],
+    "search_generations": [
+        {
+            "keys": [("generation_id", ASCENDING)],
+            "name": "idx_search_gen_id_unique",
+            "unique": True,
+        },
+        {
+            "keys": [("is_active", ASCENDING)],
+            "name": "idx_search_gen_active",
+        },
+    ],
+    "search_chunks": [
+        {
+            "keys": [("chunk_id", ASCENDING)],
+            "name": "idx_search_chunks_id_unique",
+            "unique": True,
+        },
+        {
+            "keys": [("generation_id", ASCENDING), ("article_id", ASCENDING)],
+            "name": "idx_search_chunks_gen_art",
+        },
+        {
+            "keys": [("generation_id", ASCENDING), ("published_at", DESCENDING)],
+            "name": "idx_search_chunks_gen_time",
+        },
+    ],
 }
 
 

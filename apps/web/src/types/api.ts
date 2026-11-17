@@ -301,3 +301,48 @@ export interface StoryListResponse {
   total: number;
   next_cursor?: string | null;
 }
+
+export interface SearchResultItem {
+  article_id: string;
+  source_id: string;
+  canonical_url: string;
+  title: string;
+  language: string;
+  published_at?: string | null;
+  fetched_at: string;
+  word_count?: number;
+  reading_time_minutes?: number;
+  score: number;
+  lexical_rank?: number | null;
+  vector_rank?: number | null;
+  rrf_score?: number | null;
+  snippet: string;
+}
+
+export interface SearchResponse {
+  items: SearchResultItem[];
+  total: number;
+  search_mode: "auto" | "hybrid" | "lexical" | "basic" | "basic_fallback" | string;
+  index_generation: string;
+  index_lag_seconds: number;
+  fallback_reason?: string | null;
+  query: string;
+  as_of: string;
+  next_cursor?: string | null;
+}
+
+export interface SearchStatusResponse {
+  has_active_generation: boolean;
+  active_generation?: {
+    generation_id: string;
+    is_active: boolean;
+    article_count: number;
+    chunks_count: number;
+    vector_dimensions: number;
+    created_at: string;
+    activated_at?: string | null;
+    status: string;
+  } | null;
+  index_lag_seconds: number;
+  supported_modes: string[];
+}

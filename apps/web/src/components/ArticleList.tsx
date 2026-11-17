@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
 import { api, ApiClientError } from "../lib/api";
-import type { ArticleListItem, Source } from "../types/api";
+import type { ArticleListItem, SearchResponse, Source } from "../types/api";
 import { ArticleCard } from "./ArticleCard";
 import {
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Sparkles,
   Tag,
   X,
 } from "lucide-react";
@@ -68,6 +69,9 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
   const [selectedSource, setSelectedSource] = useState(initial.source);
   const [selectedLang, setSelectedLang] = useState(initial.lang);
   const [includeUnknownDate, setIncludeUnknownDate] = useState(initial.unknownDate);
+  const [searchMode, setSearchMode] = useState<"auto" | "hybrid" | "lexical" | "basic">("auto");
+  const [searchResponse, setSearchResponse] = useState<SearchResponse | null>(null);
+  const [searchSnippets, setSearchSnippets] = useState<Record<string, { snippet: string; score: number }>>({});
 
   // Saved Query Modal State
   const [showSaveQueryModal, setShowSaveQueryModal] = useState(false);
@@ -181,21 +185,61 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
     setError(null);
 
     try {
-      const res = await api.listArticles(
-        {
-          q: searchQuery.trim() || undefined,
-          source_id: selectedSource || undefined,
-          language: selectedLang || undefined,
-          include_unknown_date: includeUnknownDate,
-          cursor: cursor,
-          limit: 12,
-        },
-        controller.signal
-      );
+      if (searchQuery.trim() && searchMode !== "basic") {
+        const sRes = await api.search(
+          {
+            q: searchQuery.trim(),
+            mode: searchMode,
+            source_id: selectedSource || undefined,
+            language: selectedLang || undefined,
+            limit: 12,
+            cursor: cursor,
+          },
+          controller.signal
+        );
 
-      setArticles(res.items);
-      setTotalCount(res.total_count);
-      setNextCursor(res.next_cursor || null);
+        const mapped: ArticleListItem[] = sRes.items.map((item) => ({
+          article_id: item.article_id,
+          source_id: item.source_id,
+          canonical_url: item.canonical_url,
+          title: item.title,
+          language: item.language,
+          published_at: item.published_at,
+          fetched_at: item.fetched_at,
+          current_version: 1,
+          word_count: item.word_count,
+          reading_time_minutes: item.reading_time_minutes,
+        }));
+
+        const snips: Record<string, { snippet: string; score: number }> = {};
+        sRes.items.forEach((it) => {
+          snips[it.article_id] = { snippet: it.snippet, score: it.score };
+        });
+
+        setArticles(mapped);
+        setSearchSnippets(snips);
+        setTotalCount(sRes.total);
+        setNextCursor(sRes.next_cursor || null);
+        setSearchResponse(sRes);
+      } else {
+        setSearchResponse(null);
+        setSearchSnippets({});
+        const res = await api.listArticles(
+          {
+            q: searchQuery.trim() || undefined,
+            source_id: selectedSource || undefined,
+            language: selectedLang || undefined,
+            include_unknown_date: includeUnknownDate,
+            cursor: cursor,
+            limit: 12,
+          },
+          controller.signal
+        );
+
+        setArticles(res.items);
+        setTotalCount(res.total_count);
+        setNextCursor(res.next_cursor || null);
+      }
     } catch (err) {
       if ((err as Error).name === "AbortError") {
         return; // Request was cleanly cancelled, ignore
@@ -218,7 +262,7 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
     setCursorHistory([]);
     loadArticles(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSource, selectedLang, includeUnknownDate]);
+  }, [selectedSource, selectedLang, includeUnknownDate, searchMode]);
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -316,6 +360,21 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
                   {s.name} ({s.source_id})
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Search Retrieval Mode */}
+          <div className="w-full md:w-52">
+            <select
+              value={searchMode}
+              onChange={(e) => setSearchMode(e.target.value as "auto" | "hybrid" | "lexical" | "basic")}
+              className="w-full py-2.5 px-3 border border-border rounded-lg text-sm bg-canvas text-text focus:ring-2 focus:ring-focus font-medium"
+              title="نمط استرجاع البحث"
+            >
+              <option value="auto">هجين ذكي (تلقائي RRF)</option>
+              <option value="hybrid">هجين (دلالي + نصي)</option>
+              <option value="lexical">نصي دقيق (BM25)</option>
+              <option value="basic">أساسي (قاعدة البيانات)</option>
             </select>
           </div>
 
@@ -482,6 +541,41 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
         </div>
       </div>
 
+      {/* Search Mode & Generation Info Banner */}
+      {searchResponse && (
+        <div className="mb-6 p-3.5 bg-slate-50 border border-border rounded-xl text-xs flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            {searchResponse.search_mode === "basic_fallback" ? (
+              <span className="inline-flex items-center space-x-1 space-x-reverse px-2.5 py-1 bg-amber-100 text-amber-900 rounded-md font-bold">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-700 ml-1" />
+                <span>بحث احتياطي أساسي (Basic Fallback)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center space-x-1 space-x-reverse px-2.5 py-1 bg-brand-light text-brand rounded-md font-bold">
+                <Sparkles className="h-3.5 w-3.5 ml-1" />
+                <span>
+                  {searchResponse.search_mode === "hybrid"
+                    ? "بحث مهجن ذكي (Reciprocal Rank Fusion - RRF)"
+                    : searchResponse.search_mode === "lexical"
+                    ? "بحث نصي دقيق (BM25)"
+                    : `نمط البحث: ${searchResponse.search_mode}`}
+                </span>
+              </span>
+            )}
+            {searchResponse.fallback_reason && (
+              <span className="text-amber-800 font-medium">({searchResponse.fallback_reason})</span>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-3 space-x-reverse text-muted text-[11px] font-mono">
+            {searchResponse.index_generation && (
+              <span>الجيل: {searchResponse.index_generation}</span>
+            )}
+            <span>تأخر الفهرس: {searchResponse.index_lag_seconds} ثانية</span>
+          </div>
+        </div>
+      )}
+
       {/* Screen States */}
       {/* 1. Loading Skeleton */}
       {isLoading && (
@@ -543,7 +637,13 @@ export function ArticleList({ onSelectArticle, initialFilters }: ArticleListProp
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((art) => (
-              <ArticleCard key={art.article_id} article={art} onSelect={onSelectArticle} />
+              <ArticleCard
+                key={art.article_id}
+                article={art}
+                onSelect={onSelectArticle}
+                snippet={searchSnippets[art.article_id]?.snippet}
+                score={searchSnippets[art.article_id]?.score}
+              />
             ))}
           </div>
 
