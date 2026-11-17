@@ -346,3 +346,90 @@ export interface SearchStatusResponse {
   index_lag_seconds: number;
   supported_modes: string[];
 }
+
+// Event Comparison (Task T16)
+export interface TimelineMilestone {
+  milestone_id: string;
+  timestamp?: string | null;
+  timestamp_basis: "published_at" | "fetched_at" | "unknown" | string;
+  source_id: string;
+  article_id: string;
+  version: number;
+  title: string;
+  language: string;
+  lead_quote: string;
+  is_lead_article: boolean;
+}
+
+export interface SourcePerspective {
+  source_id: string;
+  article_count: number;
+  first_reported_at?: string | null;
+  first_reported_basis: string;
+  latest_reported_at?: string | null;
+  headline: string;
+  lead_article_id: string;
+  lead_article_version: number;
+  key_entities: string[];
+  framing_terms: string[];
+  numerical_claims: string[];
+  word_count: number;
+  reading_time_minutes: number;
+  latency_minutes_from_first: number;
+}
+
+export interface AttributedDifference {
+  difference_id: string;
+  category: "numerical_facts" | "named_entities" | "framing_language" | "timeline_latency" | string;
+  description: string;
+  source_a: string;
+  source_a_claim: string;
+  source_a_citation: string;
+  source_b: string;
+  source_b_claim: string;
+  source_b_citation: string;
+  severity: "high" | "medium" | "low" | string;
+}
+
+export interface VersionedEvidence {
+  evidence_id: string;
+  article_id: string;
+  version: number;
+  source_id: string;
+  canonical_url: string;
+  exact_quote: string;
+  published_at?: string | null;
+  context_title: string;
+}
+
+export interface AnalystReview {
+  review_id: string;
+  story_id: string;
+  reviewer_id: string;
+  status: "verified" | "flagged" | "in_dispute" | string;
+  notes: string;
+  excluded_article_ids: string[];
+  reviewed_at: string;
+}
+
+export interface EventComparisonReport {
+  story_id: string;
+  story_title: string;
+  story_status: "emerging" | "peak" | "declining" | "closed" | string;
+  created_at: string;
+  sources_count: number;
+  articles_count: number;
+  timeline: TimelineMilestone[];
+  perspectives: SourcePerspective[];
+  divergent_points: AttributedDifference[];
+  evidence_items: VersionedEvidence[];
+  latest_review?: AnalystReview | null;
+  first_reported_source?: string | null;
+  reporting_span_hours: number;
+}
+
+export interface ReviewStoryRequest {
+  status: "verified" | "flagged" | "in_dispute" | string;
+  notes: string;
+  excluded_article_ids?: string[];
+}

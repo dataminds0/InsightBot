@@ -10,6 +10,7 @@ from insightbot.infra.mongo import get_mongo_client
 from insightbot.models.user import Role, User
 from insightbot.modules.deduplication.service import DeduplicationService
 from insightbot.modules.search.service import SearchService
+from insightbot.modules.stories.comparison import EventComparisonService
 from insightbot.modules.stories.service import StoryService
 from insightbot.repositories.article_repository import ArticleRepository
 from insightbot.repositories.audit_repository import AuditRepository
@@ -103,6 +104,13 @@ def get_story_service(
 ) -> StoryService:
     """Dependency providing StoryService."""
     return StoryService(db)
+
+
+def get_comparison_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> EventComparisonService:
+    """Dependency providing EventComparisonService."""
+    return EventComparisonService(db)
 
 
 def get_current_user(

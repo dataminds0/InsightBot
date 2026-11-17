@@ -6,13 +6,17 @@ import { ArticleList, type ArticleFilterParams } from "./components/ArticleList"
 import { ArticleDetailView } from "./components/ArticleDetailView";
 import { SourcesView } from "./components/SourcesView";
 import { StoriesView } from "./components/StoriesView";
+import { EventComparisonView } from "./components/EventComparisonView";
 import { AdminView } from "./components/AdminView";
 import { WorkspaceView } from "./components/WorkspaceView";
 
 function MainApp() {
   const { user, isLoading } = useAuth();
-  const [currentTab, setCurrentTab] = useState<"articles" | "stories" | "sources" | "admin" | "workspace">("articles");
+  const [currentTab, setCurrentTab] = useState<
+    "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace"
+  >("articles");
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [comparisonStoryId, setComparisonStoryId] = useState<string | null>(null);
   const [returnSearch, setReturnSearch] = useState<string>("");
   const [activeQueryFilters, setActiveQueryFilters] = useState<ArticleFilterParams | null>(null);
 
@@ -26,6 +30,9 @@ function MainApp() {
         setCurrentTab("articles");
       } else if (path === "/stories") {
         setCurrentTab("stories");
+        setSelectedArticleId(null);
+      } else if (path === "/comparison") {
+        setCurrentTab("comparison");
         setSelectedArticleId(null);
       } else if (path === "/sources") {
         setCurrentTab("sources");
@@ -58,10 +65,19 @@ function MainApp() {
     window.history.pushState({}, "", returnSearch ? `/${returnSearch}` : "/");
   };
 
-  const handleTabChange = (tab: "articles" | "stories" | "sources" | "admin" | "workspace") => {
+  const handleTabChange = (
+    tab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace"
+  ) => {
     setCurrentTab(tab);
     setSelectedArticleId(null);
     window.history.pushState({}, "", tab === "articles" ? "/" : `/${tab}`);
+  };
+
+  const handleOpenComparison = (storyId: string) => {
+    setComparisonStoryId(storyId);
+    setCurrentTab("comparison");
+    setSelectedArticleId(null);
+    window.history.pushState({}, "", "/comparison");
   };
 
   const handleRunSavedQuery = (queryParams: Record<string, unknown>) => {
@@ -99,7 +115,16 @@ function MainApp() {
             initialFilters={activeQueryFilters}
           />
         ) : currentTab === "stories" ? (
-          <StoriesView onSelectArticle={handleSelectArticle} />
+          <StoriesView
+            onSelectArticle={handleSelectArticle}
+            onOpenComparison={handleOpenComparison}
+          />
+        ) : currentTab === "comparison" ? (
+          <EventComparisonView
+            initialStoryId={comparisonStoryId}
+            onSelectArticle={handleSelectArticle}
+            onBackToStories={() => handleTabChange("stories")}
+          />
         ) : currentTab === "sources" ? (
           <SourcesView />
         ) : currentTab === "workspace" ? (

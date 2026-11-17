@@ -6,9 +6,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
 from insightbot.api.deps import (
+    get_comparison_service,
     get_story_service,
     require_analyst,
     require_viewer,
+)
+from insightbot.models.comparison import (
+    AnalystReview,
+    EventComparisonReport,
+    ReviewStoryRequest,
 )
 from insightbot.models.story import (
     Story,
@@ -16,6 +22,7 @@ from insightbot.models.story import (
     StoryStatus,
 )
 from insightbot.models.user import User
+from insightbot.modules.stories.comparison import EventComparisonService
 from insightbot.modules.stories.service import StoryService
 
 router = APIRouter(prefix="/api/stories", tags=["stories"])
@@ -132,3 +139,37 @@ def get_story_history(
             detail=f"Story '{story_id}' was not found.",
         )
     return story_service.get_story_history(story_id)
+
+
+@router.get("/{story_id}/comparison", response_model=EventComparisonReport)
+def get_story_comparison(
+    story_id: str,
+    current_user: User = Depends(require_viewer),
+    comparison_service: EventComparisonService = Depends(get_comparison_service),
+) -> EventComparisonReport:
+    """
+    Retrieve comprehensive multi-source coverage comparison, chronological timeline,
+    and attributed divergences for an event cluster.
+    """
+    try:
+        return comparison_service.generate_comparison_report(story_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/{story_id}/review", response_model=AnalystReview)
+def submit_story_review(
+    story_id: str,
+    payload: ReviewStoryRequest,
+    current_user: User = Depends(require_analyst),
+    comparison_service: EventComparisonService = Depends(get_comparison_service),
+) -> AnalystReview:
+    """Audited Analyst/Admin review of story coverage comparison and membership."""
+    try:
+        return comparison_service.submit_analyst_review(
+            story_id=story_id,
+            reviewer_id=current_user.user_id,
+            request=payload,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

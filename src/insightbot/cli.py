@@ -957,6 +957,73 @@ def stories_eval() -> None:
     typer.echo("=" * 80 + "\n")
 
 
+@stories_app.command(name="compare")
+def stories_compare(
+    story_id: str = typer.Argument(..., help="Story ID to compare coverage for"),
+) -> None:
+    """
+    Compare multi-source coverage angles, timeline milestones, and
+    attributed divergences for a story cluster.
+    """
+    from insightbot.modules.stories.comparison import EventComparisonService
+
+    settings = get_settings()
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = EventComparisonService(db)
+
+    try:
+        report = service.generate_comparison_report(story_id)
+    except ValueError as e:
+        typer.echo(f"[ERROR] {e}", err=True)
+        client.close()
+        raise typer.Exit(code=1)
+
+    typer.echo(f"\n{'=' * 80}")
+    typer.echo(f"EVENT COVERAGE COMPARISON: {report.story_title}")
+    typer.echo(f"Status: {report.story_status.value.upper()} | Sources: {report.sources_count} | Articles: {report.articles_count}")
+    typer.echo(f"Time Span: {report.reporting_span_hours} hours | First Reported By: {report.first_reported_source or 'N/A'}")
+    typer.echo(f"{'=' * 80}\n")
+
+    # 1. Timeline
+    typer.echo("--- CHRONOLOGICAL TIMELINE ---")
+    for m in report.timeline:
+        ts_str = m.timestamp.strftime("%Y-%m-%d %H:%M UTC") if m.timestamp else "UNKNOWN DATE"
+        lead_marker = " [LEAD]" if m.is_lead_article else ""
+        typer.echo(f"[{ts_str}] ({m.source_id}){lead_marker} {m.title}")
+        if m.lead_quote:
+            typer.echo(f"    Quote: \"{m.lead_quote[:100]}...\"")
+    typer.echo("")
+
+    # 2. Source Perspectives
+    typer.echo("--- SOURCE PERSPECTIVES & FRAMING ---")
+    for p in report.perspectives:
+        first_rep = p.first_reported_at.strftime("%H:%M UTC") if p.first_reported_at else "UNKNOWN"
+        typer.echo(f"• Source: {p.source_id} (Articles: {p.article_count}, First: {first_rep}, Latency: +{p.latency_minutes_from_first}m)")
+        typer.echo(f"  Headline: \"{p.headline}\"")
+        if p.numerical_claims:
+            typer.echo(f"  Numbers: {', '.join(p.numerical_claims)}")
+        if p.key_entities:
+            typer.echo(f"  Entities: {', '.join(p.key_entities)}")
+        if p.framing_terms:
+            typer.echo(f"  Framing: {', '.join(p.framing_terms)}")
+    typer.echo("")
+
+    # 3. Attributed Divergences
+    if report.divergent_points:
+        typer.echo("--- ATTRIBUTED DIVERGENCES (DIFFERENCES) ---")
+        for d in report.divergent_points:
+            typer.echo(f"⚠️ [{d.category.value.upper()}] Severity: {d.severity.upper()}")
+            typer.echo(f"   {d.description}")
+            typer.echo(f"   Citation A ({d.source_a}): {d.source_a_citation} -> \"{d.source_a_claim}\"")
+            typer.echo(f"   Citation B ({d.source_b}): {d.source_b_citation} -> \"{d.source_b_claim}\"")
+    else:
+        typer.echo("--- NO MAJOR ATTRIBUTED DIVERGENCES FOUND ---")
+
+    typer.echo(f"\n{'=' * 80}\n")
+    client.close()
+
+
 @search_app.command(name="query")
 def search_query(
     q: str = typer.Argument(..., help="Search query string"),

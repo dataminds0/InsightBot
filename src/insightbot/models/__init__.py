@@ -2,6 +2,16 @@
 
 from insightbot.models.article import Article, ArticleRevision, compute_content_hash
 from insightbot.models.audit import AuditLog
+from insightbot.models.comparison import (
+    AnalystReview,
+    AttributedDifference,
+    DivergenceCategory,
+    EventComparisonReport,
+    ReviewStoryRequest,
+    SourcePerspective,
+    TimelineMilestone,
+    VersionedEvidence,
+)
 from insightbot.models.duplicate import (
     DuplicateEvidence,
     DuplicateRelationship,
@@ -36,22 +46,27 @@ from insightbot.models.workspace import (
 )
 
 __all__ = [
+    "AnalystReview",
     "Article",
     "ArticleRevision",
+    "AttributedDifference",
     "AuditLog",
     "Bookmark",
     "BookmarkItem",
+    "DivergenceCategory",
     "DuplicateEvidence",
     "DuplicateRelationship",
     "DuplicateStatus",
     "DuplicateType",
     "EntityCategory",
     "EntityMention",
+    "EventComparisonReport",
     "FetchRecord",
     "Job",
     "JobStatus",
     "NoteItem",
     "PrivateNote",
+    "ReviewStoryRequest",
     "Role",
     "SavedQuery",
     "SearchGeneration",
@@ -60,13 +75,16 @@ __all__ = [
     "SearchResultItem",
     "Session",
     "Source",
+    "SourcePerspective",
     "SourcePolicy",
     "Story",
     "StoryAudit",
     "StoryAuditAction",
     "StorySnapshot",
     "StoryStatus",
+    "TimelineMilestone",
     "User",
     "UserStatus",
+    "VersionedEvidence",
     "compute_content_hash",
 ]

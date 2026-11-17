@@ -463,9 +463,10 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1 after events; Full-stack; depends T09/T14.**
 
-- [ ] Timelines, versioned evidence, responsive comparison, audited Analyst membership review.
+- [x] Timelines, versioned evidence, responsive comparison, audited Analyst membership review.
 
 **Accept:** attributed differences resolve to evidence; E 2E/RTL/unknown dates/long titles verified.
+- Comprehensive Verification: Multi-source event coverage comparison engine (`EventComparisonService`) in `src/insightbot/modules/stories/comparison.py`. Chronological timeline with Defect A13 unknown publication date disambiguation, Defect A12 safe lead snippet extraction (<= 150 chars), multi-source perspectives with first-to-report latency, extracted numerical claims across Arabic, English, Russian, and concrete attributed divergences (e.g. conflicting casualties 12 vs 45 with high severity). Audited Analyst review and article exclusion (`POST /api/stories/{story_id}/review`) with snapshots and audit trail. CLI command `insightbot stories compare <story_id>`. Full React component `EventComparisonView.tsx` with 4 calm RTL views, integrated into `Header.tsx`, `StoriesView.tsx`, and `App.tsx`. 6 dedicated tests in `tests/test_comparison.py`. Total backend suite reached 125 passed tests; Mypy clean (76 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T17 — Analytics and Exports
 

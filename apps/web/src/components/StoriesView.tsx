@@ -16,16 +16,18 @@ import {
   MapPin,
   Newspaper,
   RefreshCw,
+  Scale,
   X,
 } from "lucide-react";
 
 interface StoriesViewProps {
   onSelectArticle: (articleId: string) => void;
+  onOpenComparison?: (storyId: string) => void;
 }
 
 type StoryStatusFilter = "all" | "emerging" | "peak" | "declining" | "closed";
 
-export function StoriesView({ onSelectArticle }: StoriesViewProps) {
+export function StoriesView({ onSelectArticle, onOpenComparison }: StoriesViewProps) {
   const { user } = useAuth();
   const isAnalystOrAdmin = user?.role === "Admin" || user?.role === "Analyst";
 
@@ -313,14 +315,27 @@ export function StoriesView({ onSelectArticle }: StoriesViewProps) {
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleOpenDetail(story.story_id)}
-                  className="inline-flex items-center space-x-1 space-x-reverse font-medium text-brand hover:underline"
-                >
-                  <span>التفاصيل</span>
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  {onOpenComparison && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenComparison(story.story_id)}
+                      className="inline-flex items-center space-x-1 space-x-reverse text-xs bg-brand-light text-brand px-2.5 py-1 rounded-md hover:bg-brand-light/80 font-medium transition-colors"
+                      title="مقارنة زوايا التغطية بين المصادر"
+                    >
+                      <Scale className="h-3 w-3 ml-1" />
+                      <span>مقارنة التغطية</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenDetail(story.story_id)}
+                    className="inline-flex items-center space-x-1 space-x-reverse font-medium text-brand hover:underline"
+                  >
+                    <span>التفاصيل</span>
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -343,13 +358,28 @@ export function StoriesView({ onSelectArticle }: StoriesViewProps) {
                   <bdi>{selectedStory.title}</bdi>
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedStory(null)}
-                className="p-1 rounded-lg hover:bg-canvas text-muted hover:text-text"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                {onOpenComparison && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOpenComparison(selectedStory.story_id);
+                      setSelectedStory(null);
+                    }}
+                    className="inline-flex items-center space-x-1 space-x-reverse px-3 py-1.5 bg-brand text-white hover:bg-brand-hover rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                  >
+                    <Scale className="h-3.5 w-3.5 ml-1" />
+                    <span>مقارنة التغطية</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedStory(null)}
+                  className="p-1 rounded-lg hover:bg-canvas text-muted hover:text-text"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Analyst Controls: Merge & Split Buttons */}

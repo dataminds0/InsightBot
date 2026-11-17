@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.1.0",
   "info": {
     "title": "InsightBot API",
@@ -2905,6 +2905,198 @@
         }
       }
     },
+    "/api/stories/{story_id}/comparison": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Get Story Comparison",
+        "description": "Retrieve comprehensive multi-source coverage comparison, chronological timeline,\nand attributed divergences for an event cluster.",
+        "operationId": "get_story_comparison_api_stories__story_id__comparison_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventComparisonReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{story_id}/review": {
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Submit Story Review",
+        "description": "Audited Analyst/Admin review of story coverage comparison and membership.",
+        "operationId": "submit_story_review_api_stories__story_id__review_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewStoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalystReview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sources": {
       "get": {
         "tags": [
@@ -4307,6 +4499,51 @@
   },
   "components": {
     "schemas": {
+      "AnalystReview": {
+        "properties": {
+          "review_id": {
+            "type": "string",
+            "title": "Review Id"
+          },
+          "story_id": {
+            "type": "string",
+            "title": "Story Id"
+          },
+          "reviewer_id": {
+            "type": "string",
+            "title": "Reviewer Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "verified"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes"
+          },
+          "excluded_article_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Article Ids"
+          },
+          "reviewed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reviewed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_id",
+          "reviewer_id",
+          "notes"
+        ],
+        "title": "AnalystReview",
+        "description": "Audited Analyst/Admin review of story coverage comparison and membership."
+      },
       "ArticleDetail": {
         "properties": {
           "article_id": {
@@ -4635,6 +4872,63 @@
         "title": "ArticleVersionItem",
         "description": "Snapshot of a specific article revision."
       },
+      "AttributedDifference": {
+        "properties": {
+          "difference_id": {
+            "type": "string",
+            "title": "Difference Id"
+          },
+          "category": {
+            "$ref": "#/components/schemas/DivergenceCategory"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "source_a": {
+            "type": "string",
+            "title": "Source A"
+          },
+          "source_a_claim": {
+            "type": "string",
+            "title": "Source A Claim"
+          },
+          "source_a_citation": {
+            "type": "string",
+            "title": "Source A Citation"
+          },
+          "source_b": {
+            "type": "string",
+            "title": "Source B"
+          },
+          "source_b_claim": {
+            "type": "string",
+            "title": "Source B Claim"
+          },
+          "source_b_citation": {
+            "type": "string",
+            "title": "Source B Citation"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "medium"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "description",
+          "source_a",
+          "source_a_claim",
+          "source_a_citation",
+          "source_b",
+          "source_b_claim",
+          "source_b_citation"
+        ],
+        "title": "AttributedDifference",
+        "description": "A concrete, verifiable divergence in claims between two publishers."
+      },
       "AuditLog": {
         "properties": {
           "log_id": {
@@ -4755,6 +5049,110 @@
         ],
         "title": "BookmarkCreateRequest",
         "description": "Request payload to create a bookmark."
+      },
+      "DivergenceCategory": {
+        "type": "string",
+        "enum": [
+          "numerical_facts",
+          "named_entities",
+          "framing_language",
+          "timeline_latency"
+        ],
+        "title": "DivergenceCategory",
+        "description": "Categorization of attributed differences between sources."
+      },
+      "EventComparisonReport": {
+        "properties": {
+          "story_id": {
+            "type": "string",
+            "title": "Story Id"
+          },
+          "story_title": {
+            "type": "string",
+            "title": "Story Title"
+          },
+          "story_status": {
+            "$ref": "#/components/schemas/StoryStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "sources_count": {
+            "type": "integer",
+            "title": "Sources Count"
+          },
+          "articles_count": {
+            "type": "integer",
+            "title": "Articles Count"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineMilestone"
+            },
+            "type": "array",
+            "title": "Timeline"
+          },
+          "perspectives": {
+            "items": {
+              "$ref": "#/components/schemas/SourcePerspective"
+            },
+            "type": "array",
+            "title": "Perspectives"
+          },
+          "divergent_points": {
+            "items": {
+              "$ref": "#/components/schemas/AttributedDifference"
+            },
+            "type": "array",
+            "title": "Divergent Points"
+          },
+          "evidence_items": {
+            "items": {
+              "$ref": "#/components/schemas/VersionedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence Items"
+          },
+          "latest_review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalystReview"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "first_reported_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Reported Source"
+          },
+          "reporting_span_hours": {
+            "type": "number",
+            "title": "Reporting Span Hours",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_id",
+          "story_title",
+          "story_status",
+          "created_at",
+          "sources_count",
+          "articles_count"
+        ],
+        "title": "EventComparisonReport",
+        "description": "Comprehensive comparison report across sources for an event/story cluster."
       },
       "HTTPValidationError": {
         "properties": {
@@ -5051,6 +5449,36 @@
           "password"
         ],
         "title": "RegisterRequest"
+      },
+      "ReviewStoryRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "'verified', 'flagged', or 'in_dispute'",
+            "default": "verified"
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Notes",
+            "description": "Analyst review justification"
+          },
+          "excluded_article_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Article Ids",
+            "description": "Optional article IDs to exclude from this story"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "title": "ReviewStoryRequest",
+        "description": "Request payload for Analyst/Admin review of a story."
       },
       "Role": {
         "type": "string",
@@ -5524,6 +5952,105 @@
         ],
         "title": "SourceHealthItem"
       },
+      "SourcePerspective": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "article_count": {
+            "type": "integer",
+            "title": "Article Count",
+            "default": 1
+          },
+          "first_reported_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Reported At"
+          },
+          "first_reported_basis": {
+            "type": "string",
+            "title": "First Reported Basis",
+            "default": "published_at"
+          },
+          "latest_reported_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Reported At"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "lead_article_id": {
+            "type": "string",
+            "title": "Lead Article Id"
+          },
+          "lead_article_version": {
+            "type": "integer",
+            "title": "Lead Article Version",
+            "default": 1
+          },
+          "key_entities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Entities"
+          },
+          "framing_terms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Framing Terms"
+          },
+          "numerical_claims": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Numerical Claims"
+          },
+          "word_count": {
+            "type": "integer",
+            "title": "Word Count",
+            "default": 0
+          },
+          "reading_time_minutes": {
+            "type": "integer",
+            "title": "Reading Time Minutes",
+            "default": 1
+          },
+          "latency_minutes_from_first": {
+            "type": "integer",
+            "title": "Latency Minutes From First",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "headline",
+          "lead_article_id"
+        ],
+        "title": "SourcePerspective",
+        "description": "How a specific publisher framed and covered the event."
+      },
       "SourcePolicy": {
         "properties": {
           "rate_limit_per_minute": {
@@ -5819,6 +6346,73 @@
         "title": "StoryStatus",
         "description": "Lifecycle stages of a story/event cluster."
       },
+      "TimelineMilestone": {
+        "properties": {
+          "milestone_id": {
+            "type": "string",
+            "title": "Milestone Id"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "timestamp_basis": {
+            "type": "string",
+            "title": "Timestamp Basis",
+            "description": "Either 'published_at', 'fetched_at', or 'unknown' (Defect A13)",
+            "default": "published_at"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "article_id": {
+            "type": "string",
+            "title": "Article Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "lead_quote": {
+            "type": "string",
+            "title": "Lead Quote",
+            "description": "Safe snippet <= 150 chars (Defect A12)",
+            "default": ""
+          },
+          "is_lead_article": {
+            "type": "boolean",
+            "title": "Is Lead Article",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "article_id",
+          "title",
+          "language"
+        ],
+        "title": "TimelineMilestone",
+        "description": "A single chronological milestone in an event timeline."
+      },
       "ToggleSourceRequest": {
         "properties": {
           "enabled": {
@@ -5965,6 +6559,61 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VersionedEvidence": {
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "title": "Evidence Id"
+          },
+          "article_id": {
+            "type": "string",
+            "title": "Article Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "canonical_url": {
+            "type": "string",
+            "title": "Canonical Url"
+          },
+          "exact_quote": {
+            "type": "string",
+            "title": "Exact Quote"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "context_title": {
+            "type": "string",
+            "title": "Context Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "article_id",
+          "version",
+          "source_id",
+          "canonical_url",
+          "exact_quote",
+          "context_title"
+        ],
+        "title": "VersionedEvidence",
+        "description": "Concrete immutable quote tied to an exact article ID and version."
       }
     }
   }

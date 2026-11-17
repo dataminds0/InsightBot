@@ -1,9 +1,9 @@
 import { useAuth } from "../context/AuthContext";
-import { FolderKanban, Layers, LogOut, Newspaper, Radio, Shield, User as UserIcon } from "lucide-react";
+import { FolderKanban, Layers, LogOut, Newspaper, Radio, Scale, Shield, User as UserIcon } from "lucide-react";
 
 interface HeaderProps {
-  currentTab: "articles" | "stories" | "sources" | "admin" | "workspace";
-  onTabChange: (tab: "articles" | "stories" | "sources" | "admin" | "workspace") => void;
+  currentTab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace";
+  onTabChange: (tab: "articles" | "stories" | "comparison" | "sources" | "admin" | "workspace") => void;
 }
 
 export function Header({ currentTab, onTabChange }: HeaderProps) {
@@ -46,6 +46,19 @@ export function Header({ currentTab, onTabChange }: HeaderProps) {
               >
                 <Layers className="h-4 w-4" />
                 <span>قصص وأحداث</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onTabChange("comparison")}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 space-x-reverse ${
+                  currentTab === "comparison"
+                    ? "bg-brand-light text-brand"
+                    : "text-muted hover:text-text hover:bg-slate-100"
+                }`}
+              >
+                <Scale className="h-4 w-4" />
+                <span>مقارنة التغطية</span>
               </button>
 
               <button
