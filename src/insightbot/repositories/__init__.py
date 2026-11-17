@@ -4,6 +4,7 @@ from insightbot.repositories.article_repository import ArticleRepository, Concur
 from insightbot.repositories.duplicate_repository import DuplicateRepository
 from insightbot.repositories.job_repository import JobRepository, StaleWorkerCommitError
 from insightbot.repositories.source_repository import SourceRepository
+from insightbot.repositories.story_repository import StoryRepository
 from insightbot.repositories.workspace_repository import WorkspaceRepository
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "JobRepository",
     "SourceRepository",
     "StaleWorkerCommitError",
+    "StoryRepository",
     "WorkspaceRepository",
 ]

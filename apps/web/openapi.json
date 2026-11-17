@@ -1,4 +1,4 @@
-{
+﻿{
   "openapi": "3.1.0",
   "info": {
     "title": "InsightBot API",
@@ -2001,6 +2001,515 @@
                     "additionalProperties": true
                   },
                   "title": "Response Run Article Deduplication Api Articles  Article Id  Deduplicate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "List Stories",
+        "description": "List stories with deterministic cursor pagination and short projection (Defect A12).",
+        "operationId": "list_stories_api_stories_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/StoryStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{story_id}": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Get Story",
+        "description": "Retrieve story detail with timeline member articles (excludes full body_text).",
+        "operationId": "get_story_api_stories__story_id__get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Story Api Stories  Story Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/merge": {
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Merge Stories",
+        "description": "Audited manual merge of source_story into target_story.",
+        "operationId": "merge_stories_api_stories_merge_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeStoriesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Story"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{story_id}/split": {
+      "post": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Split Story",
+        "description": "Audited manual split of articles from a story into a new story.",
+        "operationId": "split_story_api_stories__story_id__split_post",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SplitStoryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Split Story Api Stories  Story Id  Split Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stories/{story_id}/history": {
+      "get": {
+        "tags": [
+          "stories"
+        ],
+        "summary": "Get Story History",
+        "description": "Retrieve chronological audit history for a story cluster.",
+        "operationId": "get_story_history_api_stories__story_id__history_get",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Story Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "X-Background-Poll",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Background-Poll"
+            }
+          },
+          {
+            "name": "insightbot_session",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Insightbot Session"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoryAudit"
+                  },
+                  "title": "Response Get Story History Api Stories  Story Id  History Get"
                 }
               }
             }
@@ -4053,6 +4562,34 @@
         ],
         "title": "LoginResponse"
       },
+      "MergeStoriesRequest": {
+        "properties": {
+          "target_story_id": {
+            "type": "string",
+            "title": "Target Story Id",
+            "description": "Story to merge into and retain"
+          },
+          "source_story_id": {
+            "type": "string",
+            "title": "Source Story Id",
+            "description": "Story being merged and closed"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Reason",
+            "description": "Justification for manual merger"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_story_id",
+          "source_story_id",
+          "reason"
+        ],
+        "title": "MergeStoriesRequest",
+        "description": "Payload for merging two stories."
+      },
       "NoteUpdateRequest": {
         "properties": {
           "content": {
@@ -4394,6 +4931,272 @@
         "type": "object",
         "title": "SourcePolicy",
         "description": "Operational policies for a publisher source."
+      },
+      "SplitStoryRequest": {
+        "properties": {
+          "article_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Article Ids",
+            "description": "Article IDs to move to new story"
+          },
+          "new_title": {
+            "type": "string",
+            "minLength": 3,
+            "title": "New Title",
+            "description": "Title for the newly created story"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Reason",
+            "description": "Justification for manual split"
+          }
+        },
+        "type": "object",
+        "required": [
+          "article_ids",
+          "new_title",
+          "reason"
+        ],
+        "title": "SplitStoryRequest",
+        "description": "Payload for splitting articles from a story into a new story."
+      },
+      "Story": {
+        "properties": {
+          "story_id": {
+            "type": "string",
+            "title": "Story Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "status": {
+            "$ref": "#/components/schemas/StoryStatus",
+            "default": "emerging"
+          },
+          "lead_article_id": {
+            "type": "string",
+            "title": "Lead Article Id"
+          },
+          "article_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Article Ids"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "article_count": {
+            "type": "integer",
+            "title": "Article Count",
+            "default": 1
+          },
+          "sources_count": {
+            "type": "integer",
+            "title": "Sources Count",
+            "default": 1
+          },
+          "first_article_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Article At"
+          },
+          "last_article_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Article At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "peak_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak At"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "primary_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Location"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords"
+          },
+          "entities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "lead_article_id",
+          "first_article_at",
+          "last_article_at"
+        ],
+        "title": "Story",
+        "description": "Story / Event cluster grouping articles covering the same real-world event over time.\nMaintains provenance, source diversity, temporal bounds, and optimistic versioning."
+      },
+      "StoryAudit": {
+        "properties": {
+          "audit_id": {
+            "type": "string",
+            "title": "Audit Id"
+          },
+          "story_id": {
+            "type": "string",
+            "title": "Story Id"
+          },
+          "action": {
+            "$ref": "#/components/schemas/StoryAuditAction"
+          },
+          "actor_id": {
+            "type": "string",
+            "title": "Actor Id"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "story_id",
+          "action",
+          "actor_id",
+          "reason"
+        ],
+        "title": "StoryAudit",
+        "description": "Audit record for story mergers, splits, manual reassignments, and lifecycle changes."
+      },
+      "StoryAuditAction": {
+        "type": "string",
+        "enum": [
+          "created",
+          "article_added",
+          "article_removed",
+          "merged",
+          "split",
+          "status_changed",
+          "manual_edit"
+        ],
+        "title": "StoryAuditAction",
+        "description": "Auditable operations performed on story clusters."
+      },
+      "StoryListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "StoryListResponse",
+        "description": "Paginated list of stories."
+      },
+      "StoryStatus": {
+        "type": "string",
+        "enum": [
+          "emerging",
+          "peak",
+          "declining",
+          "closed"
+        ],
+        "title": "StoryStatus",
+        "description": "Lifecycle stages of a story/event cluster."
       },
       "ToggleSourceRequest": {
         "properties": {

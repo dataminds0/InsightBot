@@ -189,6 +189,57 @@ INDEX_SPECS: dict[str, list[dict[str, Any]]] = {
             "name": "idx_dup_rel_detected_at",
         },
     ],
+    "stories": [
+        {
+            "keys": [("story_id", ASCENDING)],
+            "name": "idx_stories_id_unique",
+            "unique": True,
+        },
+        {
+            "keys": [("status", ASCENDING), ("updated_at", DESCENDING)],
+            "name": "idx_stories_status_updated",
+        },
+        {
+            "keys": [("article_ids", ASCENDING)],
+            "name": "idx_stories_article_ids",
+        },
+        {
+            "keys": [("lead_article_id", ASCENDING)],
+            "name": "idx_stories_lead_article",
+        },
+    ],
+    "story_snapshots": [
+        {
+            "keys": [("story_id", ASCENDING), ("version", ASCENDING)],
+            "name": "idx_snapshots_story_version_unique",
+            "unique": True,
+        },
+    ],
+    "story_audits": [
+        {
+            "keys": [("story_id", ASCENDING), ("timestamp", DESCENDING)],
+            "name": "idx_story_audits_story_time",
+        },
+        {
+            "keys": [("actor_id", ASCENDING), ("timestamp", DESCENDING)],
+            "name": "idx_story_audits_actor_time",
+        },
+    ],
+    "entity_mentions": [
+        {
+            "keys": [("entity_id", ASCENDING)],
+            "name": "idx_entities_id_unique",
+            "unique": True,
+        },
+        {
+            "keys": [("article_id", ASCENDING), ("category", ASCENDING)],
+            "name": "idx_entities_article_category",
+        },
+        {
+            "keys": [("text", ASCENDING)],
+            "name": "idx_entities_text",
+        },
+    ],
 }
 
 

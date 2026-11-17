@@ -11,6 +11,15 @@ from insightbot.models.duplicate import (
 from insightbot.models.fetch import FetchRecord
 from insightbot.models.job import Job, JobStatus
 from insightbot.models.source import Source, SourcePolicy
+from insightbot.models.story import (
+    EntityCategory,
+    EntityMention,
+    Story,
+    StoryAudit,
+    StoryAuditAction,
+    StorySnapshot,
+    StoryStatus,
+)
 from insightbot.models.user import Role, Session, User, UserStatus
 from insightbot.models.workspace import (
     Bookmark,
@@ -30,6 +39,8 @@ __all__ = [
     "DuplicateRelationship",
     "DuplicateStatus",
     "DuplicateType",
+    "EntityCategory",
+    "EntityMention",
     "FetchRecord",
     "Job",
     "JobStatus",
@@ -40,6 +51,11 @@ __all__ = [
     "Session",
     "Source",
     "SourcePolicy",
+    "Story",
+    "StoryAudit",
+    "StoryAuditAction",
+    "StorySnapshot",
+    "StoryStatus",
     "User",
     "UserStatus",
     "compute_content_hash",

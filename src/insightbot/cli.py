@@ -27,6 +27,10 @@ from insightbot.modules.sources.registry import (
     sync_sources_to_db,
     validate_sources_config,
 )
+from insightbot.modules.stories import (
+    StoryClusteringEngine,
+    StoryService,
+)
 from insightbot.repositories.source_repository import SourceRepository
 from insightbot.repositories.user_repository import UserRepository
 from insightbot.services.auth_service import AuthenticationError, AuthService
@@ -44,6 +48,7 @@ sources_app = typer.Typer(help="Source definition and validation commands.")
 models_app = typer.Typer(help="Model manifest and local weight lifecycle management.")
 eval_app = typer.Typer(help="Multilingual evaluation, gold corpus, and quality reports.")
 dedup_app = typer.Typer(help="Deduplication and syndication analysis commands.")
+stories_app = typer.Typer(help="Story clusters, lifecycle, and event timeline commands.")
 
 app.add_typer(config_app, name="config")
 app.add_typer(db_app, name="db")
@@ -52,6 +57,7 @@ app.add_typer(sources_app, name="sources")
 app.add_typer(models_app, name="models")
 app.add_typer(eval_app, name="eval")
 app.add_typer(dedup_app, name="dedup")
+app.add_typer(stories_app, name="stories")
 
 
 @config_app.command(name="init")
@@ -742,6 +748,208 @@ def dedup_eval() -> None:
     typer.echo(f"RECALL:    {rec_pct:<10} (Target: >= 80.0%)")
     typer.echo(f"ZERO COLLAPSE OF DISTINCT REPORTS: {'VERIFIED' if fp == 0 else 'VIOLATED'}")
     typer.echo(f"ACCEPTANCE CRITERIA VERDICT:       {gate_str}")
+    typer.echo("=" * 80 + "\n")
+
+
+@stories_app.command(name="list")
+def stories_list(
+    status: Optional[str] = typer.Option(None, "--status", help="Filter by status (emerging, peak, declining, closed)"),
+    limit: int = typer.Option(20, "--limit", help="Maximum stories to return"),
+) -> None:
+    """List stories with deterministic pagination and short projection (Defect A12)."""
+    from insightbot.models.story import StoryStatus
+
+    settings = get_settings()
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = StoryService(db)
+
+    status_enum = StoryStatus(status) if status else None
+    items, _, total = service.list_stories(status=status_enum, limit=limit)
+
+    typer.echo(f"\n[STORIES] Total stories: {total} (showing {len(items)})")
+    typer.echo("-" * 90)
+    typer.echo(f"{'STATUS':<12} {'ARTICLES':<10} {'SOURCES':<10} {'LEAD TITLE'}")
+    typer.echo("-" * 90)
+    for s in items:
+        status_str = s.get("status", "unknown")
+        art_count = s.get("article_count", 0)
+        src_count = s.get("sources_count", 0)
+        title = s.get("title", "")[:55]
+        typer.echo(f"{status_str:<12} {art_count:<10} {src_count:<10} {title}")
+    typer.echo("-" * 90 + "\n")
+    client.close()
+
+
+@stories_app.command(name="cluster")
+def stories_cluster(
+    limit: int = typer.Option(50, "--limit", help="Maximum unclustered articles to process"),
+) -> None:
+    """Batch cluster un-clustered articles into event stories."""
+    settings = get_settings()
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = StoryService(db)
+
+    count = service.run_batch_clustering(limit=limit)
+    typer.echo(f"[SUCCESS] Processed {count} article(s) into story clusters.")
+    client.close()
+
+
+@stories_app.command(name="eval")
+def stories_eval() -> None:
+    """
+    Evaluate Story Clustering precision, recall, location guards,
+    temporal cutoff guards, and chain-merge defenses.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from insightbot.models.article import Article, compute_content_hash
+    from insightbot.models.story import Story, StoryStatus
+
+    engine = StoryClusteringEngine(
+        headline_similarity_threshold=0.55,
+        shingle_similarity_threshold=0.45,
+        temporal_window_hours=72.0,
+    )
+    now = datetime(2026, 11, 17, 10, 0, tzinfo=timezone.utc)
+
+    # Lead article of base story
+    lead_body = "ضرب زلزال بقوة 6.3 درجات قبالة السواحل الشرقية لليابان صباح اليوم مما تسبب في إطلاق تحذيرات من تسونامي في طوكيو والمحافظات المجاورة."
+    lead_art = Article(
+        article_id="story-lead",
+        source_id="nhk_en",
+        canonical_url="https://nhk.or.jp/quake",
+        original_url="https://nhk.or.jp/quake",
+        resolved_url="https://nhk.or.jp/quake",
+        title="زلزال بقوة 6.3 درجات يضرب السواحل الشرقية في طوكيو باليابان",
+        body_text=lead_body,
+        content_hash=compute_content_hash(lead_body),
+        published_at=now,
+    )
+
+    base_story = Story(
+        story_id="story-quake-japan",
+        title=lead_art.title,
+        status=StoryStatus.EMERGING,
+        lead_article_id=lead_art.article_id,
+        article_ids=[lead_art.article_id],
+        sources=["nhk_en"],
+        article_count=1,
+        sources_count=1,
+        first_article_at=now,
+        last_article_at=now,
+        primary_location="Japan",
+        entities=["Japan", "Tokyo"],
+        keywords=["زلزال", "درجات", "طوكيو", "اليابان", "تسونامي"],
+        version=1,
+    )
+
+    # Test cases: (article, expected_membership, description)
+    test_cases: list[tuple[Article, bool, str]] = []
+
+    # 1. Valid event update within 3 hours from different source
+    body_corrob = "أعلنت هيئة الأرصاد اليابانية أن زلزالا بقوة 6.3 درجات ضرب منطقة كانتو قرب طوكيو دون تسجيل إصابات بشرية خطيرة حتى اللحظة."
+    art_corrob = Article(
+        article_id="eval-corrob",
+        source_id="aljazeera_ar",
+        canonical_url="https://aljazeera.net/japan-quake",
+        original_url="https://aljazeera.net/japan-quake",
+        resolved_url="https://aljazeera.net/japan-quake",
+        title="زلزال بقوة 6.3 درجات يضرب قرب العاصمة طوكيو في اليابان",
+        body_text=body_corrob,
+        content_hash=compute_content_hash(body_corrob),
+        published_at=now + timedelta(hours=3),
+    )
+    test_cases.append((art_corrob, True, "Same Event Multi-source Corroboration"))
+
+    # 2. Location Conflict Guard: Earthquake in Chile, not Japan!
+    body_chile = "ضرب زلزال بقوة 6.3 درجات السواحل الوسطى في تشيلي ما دفع السلطات المحلية لإخلاء الشواطئ تحسبا لأمواج مد بحري."
+    art_chile = Article(
+        article_id="eval-chile",
+        source_id="bbc_ar",
+        canonical_url="https://bbc.com/chile-quake",
+        original_url="https://bbc.com/chile-quake",
+        resolved_url="https://bbc.com/chile-quake",
+        title="زلزال بقوة 6.3 درجات يضرب السواحل في تشيلي",
+        body_text=body_chile,
+        content_hash=compute_content_hash(body_chile),
+        published_at=now + timedelta(hours=5),
+    )
+    test_cases.append((art_chile, False, "Location Conflict Guard (Japan vs Chile)"))
+
+    # 3. Temporal Cutoff Guard: Similar earthquake but 10 days later
+    art_late = Article(
+        article_id="eval-late",
+        source_id="reuters_ar",
+        canonical_url="https://reuters.com/japan-late",
+        original_url="https://reuters.com/japan-late",
+        resolved_url="https://reuters.com/japan-late",
+        title="زلزال بقوة 6.3 درجات يضرب السواحل الشرقية في طوكيو باليابان مجددا",
+        body_text=lead_body,
+        content_hash=compute_content_hash(lead_body),
+        published_at=now + timedelta(days=10),
+    )
+    test_cases.append((art_late, False, "Temporal Cutoff Guard (Delta > 72h)"))
+
+    # 4. Chain-Merge Guard: Unrelated political article sharing only generic words
+    body_unrelated = "عقد رئيس الوزراء في طوكيو اجتماعا حكوميا موسعا لمناقشة الميزانية السنوية ومخصصات التعليم والرعاية الصحية."
+    art_unrelated = Article(
+        article_id="eval-unrelated",
+        source_id="asahi_en",
+        canonical_url="https://asahi.com/politics",
+        original_url="https://asahi.com/politics",
+        resolved_url="https://asahi.com/politics",
+        title="اجتماع حكومي موسع في طوكيو لمناقشة الميزانية السنوية",
+        body_text=body_unrelated,
+        content_hash=compute_content_hash(body_unrelated),
+        published_at=now + timedelta(hours=2),
+    )
+    test_cases.append((art_unrelated, False, "Chain-Merge Defense (Unrelated Topic)"))
+
+    tp = 0
+    fp = 0
+    tn = 0
+    fn = 0
+
+    typer.echo("\n" + "=" * 80)
+    typer.echo("               STORY CLUSTERING & EVENT LIFECYCLE EVALUATION")
+    typer.echo("=" * 80)
+    typer.echo(f"{'TEST CASE':<52} {'EXPECTED':<10} {'PRED':<10} {'RESULT'}")
+    typer.echo("-" * 80)
+
+    for art, expected, desc in test_cases:
+        belongs, score, reason = engine.evaluate_membership(art, base_story, lead_art)
+        if expected and belongs:
+            tp += 1
+            verdict = "PASS (TP)"
+        elif not expected and not belongs:
+            tn += 1
+            verdict = "PASS (TN)"
+        elif not expected and belongs:
+            fp += 1
+            verdict = "FAIL (FP)"
+        else:
+            fn += 1
+            verdict = "FAIL (FN)"
+
+        exp_str = "CLUSTER" if expected else "SEPARATE"
+        pred_str = "CLUSTER" if belongs else "SEPARATE"
+        typer.echo(f"{desc:<52} {exp_str:<10} {pred_str:<10} {verdict}")
+
+    typer.echo("-" * 80)
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 1.0
+    prec_pct = f"{precision * 100:.1f}%"
+    rec_pct = f"{recall * 100:.1f}%"
+
+    passed_gate = precision >= 0.90 and recall >= 0.80 and fp == 0
+    gate_str = "PASS" if passed_gate else "FAIL"
+
+    typer.echo(f"EVENT PRECISION:        {prec_pct:<10} (Target: >= 90.0%)")
+    typer.echo(f"EVENT RECALL:           {rec_pct:<10} (Target: >= 80.0%)")
+    typer.echo(f"LOCATION/CHAIN DEFENSE: {'VERIFIED' if fp == 0 else 'VIOLATED'}")
+    typer.echo(f"ACCEPTANCE CRITERIA:    {gate_str}")
     typer.echo("=" * 80 + "\n")
 
 

@@ -13,6 +13,7 @@ from insightbot.api.articles import router as articles_router
 from insightbot.api.auth import router as auth_router
 from insightbot.api.middleware import RequestIDMiddleware, setup_exception_handlers
 from insightbot.api.sources import router as sources_router
+from insightbot.api.stories import router as stories_router
 from insightbot.api.workspace import router as workspace_router
 from insightbot.config import get_settings
 
@@ -47,6 +48,7 @@ app.include_router(admin_sources_router)
 app.include_router(admin_jobs_router)
 app.include_router(admin_audit_router)
 app.include_router(articles_router)
+app.include_router(stories_router)
 app.include_router(sources_router)
 app.include_router(workspace_router)
 

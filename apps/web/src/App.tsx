@@ -5,12 +5,13 @@ import { LoginForm } from "./components/LoginForm";
 import { ArticleList, type ArticleFilterParams } from "./components/ArticleList";
 import { ArticleDetailView } from "./components/ArticleDetailView";
 import { SourcesView } from "./components/SourcesView";
+import { StoriesView } from "./components/StoriesView";
 import { AdminView } from "./components/AdminView";
 import { WorkspaceView } from "./components/WorkspaceView";
 
 function MainApp() {
   const { user, isLoading } = useAuth();
-  const [currentTab, setCurrentTab] = useState<"articles" | "sources" | "admin" | "workspace">("articles");
+  const [currentTab, setCurrentTab] = useState<"articles" | "stories" | "sources" | "admin" | "workspace">("articles");
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
   const [returnSearch, setReturnSearch] = useState<string>("");
   const [activeQueryFilters, setActiveQueryFilters] = useState<ArticleFilterParams | null>(null);
@@ -23,6 +24,9 @@ function MainApp() {
         const id = path.replace("/articles/", "").trim();
         setSelectedArticleId(id || null);
         setCurrentTab("articles");
+      } else if (path === "/stories") {
+        setCurrentTab("stories");
+        setSelectedArticleId(null);
       } else if (path === "/sources") {
         setCurrentTab("sources");
         setSelectedArticleId(null);
@@ -54,7 +58,7 @@ function MainApp() {
     window.history.pushState({}, "", returnSearch ? `/${returnSearch}` : "/");
   };
 
-  const handleTabChange = (tab: "articles" | "sources" | "admin" | "workspace") => {
+  const handleTabChange = (tab: "articles" | "stories" | "sources" | "admin" | "workspace") => {
     setCurrentTab(tab);
     setSelectedArticleId(null);
     window.history.pushState({}, "", tab === "articles" ? "/" : `/${tab}`);
@@ -94,6 +98,8 @@ function MainApp() {
             onSelectArticle={handleSelectArticle}
             initialFilters={activeQueryFilters}
           />
+        ) : currentTab === "stories" ? (
+          <StoriesView onSelectArticle={handleSelectArticle} />
         ) : currentTab === "sources" ? (
           <SourcesView />
         ) : currentTab === "workspace" ? (

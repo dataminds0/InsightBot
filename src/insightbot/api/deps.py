@@ -9,11 +9,13 @@ from insightbot.config import Settings, get_settings
 from insightbot.infra.mongo import get_mongo_client
 from insightbot.models.user import Role, User
 from insightbot.modules.deduplication.service import DeduplicationService
+from insightbot.modules.stories.service import StoryService
 from insightbot.repositories.article_repository import ArticleRepository
 from insightbot.repositories.audit_repository import AuditRepository
 from insightbot.repositories.duplicate_repository import DuplicateRepository
 from insightbot.repositories.job_repository import JobRepository
 from insightbot.repositories.source_repository import SourceRepository
+from insightbot.repositories.story_repository import StoryRepository
 from insightbot.repositories.user_repository import UserRepository
 from insightbot.repositories.workspace_repository import WorkspaceRepository
 from insightbot.services.auth_service import AuthenticationError, AuthService
@@ -87,6 +89,20 @@ def get_deduplication_service(
 ) -> DeduplicationService:
     """Dependency providing DeduplicationService."""
     return DeduplicationService(db)
+
+
+def get_story_repository(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> StoryRepository:
+    """Dependency providing StoryRepository."""
+    return StoryRepository(db)
+
+
+def get_story_service(
+    db: Database[dict[str, Any]] = Depends(get_db),
+) -> StoryService:
+    """Dependency providing StoryService."""
+    return StoryService(db)
 
 
 def get_current_user(

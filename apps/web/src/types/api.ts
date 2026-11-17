@@ -241,3 +241,63 @@ export interface DuplicateRelationshipItem {
     reading_time_minutes?: number;
   } | null;
 }
+
+export interface StoryItem {
+  story_id: string;
+  title: string;
+  summary: string;
+  status: "emerging" | "peak" | "declining" | "closed" | string;
+  lead_article_id: string;
+  article_ids: string[];
+  sources: string[];
+  article_count: number;
+  sources_count: number;
+  first_article_at: string;
+  last_article_at: string;
+  created_at: string;
+  updated_at: string;
+  peak_at?: string | null;
+  closed_at?: string | null;
+  primary_location?: string | null;
+  keywords: string[];
+  entities: string[];
+  version: number;
+}
+
+export interface StoryDetail extends StoryItem {
+  member_articles: Array<{
+    article_id: string;
+    source_id: string;
+    canonical_url: string;
+    title: string;
+    language: string;
+    published_at?: string | null;
+    fetched_at: string;
+    word_count?: number;
+    reading_time_minutes?: number;
+  }>;
+}
+
+export interface StoryAuditItem {
+  audit_id: string;
+  story_id: string;
+  action:
+    | "created"
+    | "article_added"
+    | "article_removed"
+    | "merged"
+    | "split"
+    | "status_changed"
+    | "manual_edit"
+    | string;
+  actor_id: string;
+  reason: string;
+  details: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface StoryListResponse {
+  items: StoryItem[];
+  total: number;
+  next_cursor?: string | null;
+}

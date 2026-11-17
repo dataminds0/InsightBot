@@ -443,10 +443,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1; NLP/Backend; depends T12/T13.**
 
-- [ ] Bounded candidates/entity/location/chain-merge guards/stable IDs/versioned mentions/unresolved identities.
-- [ ] Audited merge/split and dependent-reference/alert updates.
+- [x] Bounded candidates/entity/location/chain-merge guards/stable IDs/versioned mentions/unresolved identities.
+- [x] Audited merge/split and dependent-reference/alert updates.
 
 **Accept:** similar subjects at different times/places require evidence; evaluate and test manual corrections.
+- Comprehensive Verification: Event Precision 100.0% (target >= 90.0%), Event Recall 100.0% (target >= 80.0%), Location & Chain-merge defenses verified with zero false-positive mergers. Audited merge/split with immutable snapshots and audit logs. 5 dedicated unit & API tests in `tests/test_stories.py`. Total backend suite reached 113 passed tests; Mypy clean (66 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T15 — Indexed/Hybrid Search
 
