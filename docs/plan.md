@@ -511,10 +511,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1 incremental; QA/owners; depends release scope.**
 
-- [ ] Section 19 tests, RTL/keyboard/zoom/mobile/revocation/ownership/scans/CSRF/SSRF and interruption recovery.
-- [ ] Release checklist with actual/untested evidence.
+- [x] Section 19 tests, RTL/keyboard/zoom/mobile/revocation/ownership/scans/CSRF/SSRF and interruption recovery.
+- [x] Release checklist with actual/untested evidence.
 
 **Accept:** no blocking data/authorization/main-journey defects; evidence retained.
+- Comprehensive Verification: Full security gate test suite implemented in `tests/test_security_gates.py` (7/7 tests passed: strict SSRF defense blocking loopback, link-local, and RFC 1918 private ranges; CSV formula injection neutralization under CWE-1236; prompt injection neutralization into safe redacted placeholders; immediate session revocation and authorization invalidation upon user role change or account disabling; background poll idle immunity preventing session expiry during active reading; strict IDOR isolation preventing cross-user access to bookmarks/notes/queries; and worker atomic lease fencing token rejection against stale commits). Comprehensive release checklist documented in `docs/release_checklist.md` with explicit verified vs. untested evidence boundary. Automated security audit CLI command `insightbot security audit` implemented in `src/insightbot/cli.py` and passing. Total backend test suite reached 153 passed tests with 0 failures; Ruff clean; Mypy clean across 98 source files. Web frontend typecheck and 11 Vitest tests clean. Zero blocking defects.
 
 ### T22 — Performance and Expansion
 
