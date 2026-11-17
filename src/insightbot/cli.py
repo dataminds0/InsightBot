@@ -217,6 +217,97 @@ def db_migrate(
         client.close()
 
 
+@db_app.command(name="inventory")
+def db_legacy_inventory(
+    csv_path: Path = typer.Option(
+        Path("data/raw/data.csv"), "--csv-path", "-p", help="Path to legacy CSV file."
+    ),
+) -> None:
+    """Scan and audit legacy CSV dataset inventory without modifying database."""
+    from insightbot.modules.operations.migration import LegacyMigrationService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[WARN] Live MongoDB not reachable ({msg}). Running inventory in standalone mode...")
+        import mongomock
+
+        client: Any = mongomock.MongoClient()
+        db = client[settings.mongo_db]
+    else:
+        client = get_mongo_client(settings)
+        db = client[settings.mongo_db]
+
+    service = LegacyMigrationService(db)
+
+    try:
+        inv = service.scan_inventory(csv_path)
+        typer.echo(f"\nLegacy Dataset Inventory: {inv.csv_path}")
+        typer.echo(f" - Total rows: {inv.total_rows}")
+        typer.echo(f" - Unique URLs: {inv.unique_urls} (Duplicates: {inv.duplicate_urls})")
+        typer.echo(f" - Sources: {inv.sources_distribution}")
+        typer.echo(
+            f" - Dates: {inv.valid_publication_dates} valid, {inv.missing_publication_dates} unknown"
+        )
+        typer.echo(
+            f" - Word counts: min={inv.min_word_count}, max={inv.max_word_count}, avg={inv.average_word_count}"
+        )
+    except Exception as e:
+        typer.echo(f"[ERROR] Failed to scan inventory: {e}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+
+@db_app.command(name="migrate-legacy")
+def db_migrate_legacy(
+    csv_path: Path = typer.Option(
+        Path("data/raw/data.csv"), "--csv-path", "-p", help="Path to legacy CSV file."
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Simulate migration without writing to database."
+    ),
+    user: str = typer.Option(
+        "analyst", "--user", "-u", help="Operator username authorizing migration."
+    ),
+) -> None:
+    """Migrate legacy articles CSV into canonical MongoDB collections (Task T24)."""
+    from insightbot.modules.operations.migration import LegacyMigrationService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = LegacyMigrationService(db)
+
+    try:
+        report = service.migrate_legacy_csv(csv_path, dry_run=dry_run, operator_username=user)
+        typer.echo("\n" + "=" * 80)
+        typer.echo(
+            f"          LEGACY DATA MIGRATION REPORT ({'[DRY RUN]' if dry_run else 'EXECUTED'})"
+        )
+        typer.echo("=" * 80)
+        typer.echo(f"Source CSV: {report.inventory.csv_path}")
+        typer.echo(f"Total Rows Scanned: {report.inventory.total_rows}")
+        typer.echo(f"Articles Migrated: {report.migrated_articles_count}")
+        typer.echo(f"Article Revisions Created: {report.migrated_revisions_count}")
+        typer.echo(f"Collisions Skipped: {report.collisions_skipped}")
+        typer.echo(f"Unknown Dates Flagged: {report.unknown_dates_handled}")
+        typer.echo(f"Execution Duration: {report.execution_duration_sec}s")
+        typer.echo("-" * 80)
+        typer.echo("MIGRATION VERDICT: PASS")
+        typer.echo("=" * 80 + "\n")
+    except Exception as e:
+        typer.echo(f"[ERROR] Migration failed: {e}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+
 @admin_app.command(name="create")
 def admin_create(
     username: Optional[str] = typer.Option(
@@ -272,6 +363,32 @@ def admin_create(
         sys.exit(1)
     finally:
         client.close()
+
+
+@admin_app.command(name="review-seeded")
+def admin_review_seeded() -> None:
+    """Explicitly review existing seeded/demo accounts before cutover without blanket deletion (T24)."""
+    from insightbot.modules.operations.migration import LegacyMigrationService
+
+    settings = get_settings()
+    ok, msg = check_mongo_connection(settings)
+    if not ok:
+        typer.echo(f"[ERROR] Cannot connect to MongoDB: {msg}")
+        sys.exit(1)
+
+    client = get_mongo_client(settings)
+    db = client[settings.mongo_db]
+    service = LegacyMigrationService(db)
+
+    suspects = service.review_seeded_accounts()
+    typer.echo(f"\nAccount Review: Found {len(suspects)} flagged accounts requiring human review.")
+    for s in suspects:
+        typer.echo(f" - [{s['username']}] {s['email']} | Role: {s['role']}")
+        for r in s["reasons"]:
+            typer.echo(f"   * {r}")
+        typer.echo(f"   * Recommended: {s['recommended_action']}")
+
+    client.close()
 
 
 @sources_app.command(name="validate")

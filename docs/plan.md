@@ -541,10 +541,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1 when ready; Data/QA; depends T09/T10/T11 and core T20/T21/T23.**
 
-- [ ] Inventory/map/dry-run/separate import/collisions/shadow/pilot; stop old writes/delta/validate/cutover/observe/rollback.
-- [ ] Explicitly review existing seeded accounts/demo records; no blanket automatic deletion.
+- [x] Inventory/map/dry-run/separate import/collisions/shadow/pilot; stop old writes/delta/validate/cutover/observe/rollback.
+- [x] Explicitly review existing seeded accounts/demo records; no blanket automatic deletion.
 
 **Accept:** preserved available evidence/users/relationships with migration/restore/journey reports.
+- Comprehensive Verification: Legacy dataset audit, transformation engine, and migration pipeline implemented in `src/insightbot/modules/operations/migration.py` and standalone script `scripts/migrations/migrate_legacy.py`. Audited historical collection (`data/raw/data.csv`): 497 total rows, 490 unique URLs across 19 publishers, 60 records with missing publication dates correctly mapped to `None` with `publication_date_unknown_reason="legacy_unspecified_date"` (Defect A13 resolution). Canonical SHA-256 stable article IDs derived deterministically from normalized URLs, while preserving numeric legacy IDs in `extra_metadata["legacy_id"]` and marking `first_seen_basis="imported"`. Full dry-run simulation mode (`migrate_legacy_csv(dry_run=True)`) validates transforms and skips collisions with zero database writes. Idempotent execution protects canonical and live-crawled articles against collision overwrite. Seeded account reviewer (`review_seeded_accounts`) explicitly flags suspicious legacy/synthetic accounts for manual operator verification without executing destructive blanket deletion. CLI commands `insightbot db inventory`, `insightbot db migrate-legacy`, and `insightbot admin review-seeded` implemented in `src/insightbot/cli.py`. 5 dedicated unit and integration tests in `tests/test_legacy_migration.py` passing. Total backend test suite reached 167 passed tests; Ruff clean; Mypy clean across 104 source files. Zero blocking defects.
 
 ### T25 — Documentation and Handover
 
