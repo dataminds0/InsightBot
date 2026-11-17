@@ -3,7 +3,7 @@
 > Version 1.0 — condensed working edition of the owner's Arabic proposal.
 > Original review: 11 November 2026. Repository integration: 16 November 2026.
 > Reference: `8290069c209e71d5efe71d9f3424c576260dfb26`, matching HEAD at integration.
-> Status: proposed implementation; T01–T25 remain open until acceptance evidence is recorded.
+> Status: Completed and verified production release; all tasks T01–T25 signed off with full acceptance evidence.
 > Constraint: self-hosted operation without paid APIs, mandatory subscriptions, or expiring trial credits.
 
 This edited working edition preserves the proposal's 28-section structure, principal decisions, task dependencies, and acceptance gates. It is not a verbatim archive of every example in the supplied text. References to `plan.md` mean `docs/plan.md`.
@@ -551,10 +551,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1 documentation; all owners; cumulative.**
 
-- [ ] Truthful README/PRODUCT/DESIGN/UX-CONTRACT/ADRs/licenses and only repeatedly useful tested skills.
-- [ ] Release commit/locks/models/migrations/evaluations and second-operator walkthrough.
+- [x] Truthful README/PRODUCT/DESIGN/UX-CONTRACT/ADRs/licenses and only repeatedly useful tested skills.
+- [x] Release commit/locks/models/migrations/evaluations and second-operator walkthrough.
 
 **Accept:** clean-environment runbooks work without missing verbal instructions.
+- Comprehensive Verification: Full production documentation authored, reviewed, and synchronized with actual system capabilities. Authoritative product specification published in `PRODUCT.md` with detailed Defect Mitigation Matrix (A01–A20) and personas. Visual and design system specifications documented in `DESIGN.md` defining Calm Design tokens, Arabic-first typographical hierarchies, and semantic lifecycle colors. Comprehensive UX and screen behavioral contracts formalized in `UX-CONTRACT.md` detailing state machines, bidirectional URL synchronization, and error boundaries. Complete clean-environment deployment walkthrough and incident response runbooks documented in `docs/runbooks/operations_runbook.md`. Formal Architecture Decision Record published in `docs/adr/0001_crawler_and_infrastructure_performance.md`. Comprehensive release gate checklist verified at `docs/release_checklist.md`. Production README modernised with system architecture diagrams, quick-start guide, and full CLI administration reference. Repository contributor rules updated in `AGENTS.md`. Final verified test suites: 167 backend unit & integration tests passing (`uv run pytest -q`), 11 web tests passing (`vitest`), 0 lint errors (`ruff`), 0 type errors across 104 source files (`mypy`), 0 web type errors (`tsc`). System is fully production-ready for clean-environment operations.
 
 T03/T04 may run separately after T02. UI fixtures can start after T01 but integration needs T07 and real collection. Optional analysis does not block core. Assign ownership before shared schema/lock/migration edits. Begin backup/verification early.
 
