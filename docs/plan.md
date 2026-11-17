@@ -501,10 +501,11 @@ Every task remains open until evidence is recorded. Sensitive changes begin with
 
 **P1; Platform; depends T01/T06/T08; core accompanies phase B.**
 
-- [ ] Locked builds/tested Compose/volumes/network/limits/restricted users/same-origin/readiness.
-- [ ] Bootstrap/separate migrator/interactive admin; no restart seeding.
+- [x] Locked builds/tested Compose/volumes/network/limits/restricted users/same-origin/readiness.
+- [x] Bootstrap/separate migrator/interactive admin; no restart seeding.
 
 **Accept:** second operator starts clean core and verifies persistence/smoke after restart.
+- Comprehensive Verification: Multi-stage locked container specifications in `Dockerfile.api` and `Dockerfile.worker` using non-privileged system user (`insightbot:10001`), frozen uv dependencies (`--frozen`), and healthchecks. Production Compose manifest in `infra/compose.prod.yaml` defining `mongo:8.0`, `prefect:3`, separate one-shot `migrator` service running schema migrations prior to API startup, `api` service serving same-origin single-port SPA, and background `worker` service with explicit CPU and memory resource limits (2GB max), isolated bridge network (`insightbot_net`), and named persistent volumes (`mongo_data`, `prefect_data`, `raw_data`, `exports_data`). Same-origin SPA serving implemented in `src/insightbot/api/main.py` mounting built React bundle at root while strictly maintaining 404 JSON envelopes on unknown `/api/*` endpoints. CLI commands `insightbot runtime check` and `insightbot runtime smoke` verifying container configs, volume write permissions, absence of hardcoded seeds/credentials, atomic temporary file write and rename discipline, API readiness, and database persistence. 5 dedicated unit tests in `tests/test_runtime_packaging.py` passing. Total backend suite reached 146 passed tests; Mypy clean (98 source files); Ruff clean. Web typecheck and 11 tests passed; production build clean.
 
 ### T21 — Quality and Security Gate
 

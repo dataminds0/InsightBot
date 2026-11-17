@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     export_storage_path: Path = Path("data/exports")
     sources_config_path: Path = Path("configs/sources.yaml")
     model_manifest_path: Path = Path("models/manifest.json")
+    static_dir: Optional[Path] = Path("apps/web/dist")
 
     # Timezone & Localization
     timezone: str = "UTC"

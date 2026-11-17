@@ -1,0 +1,154 @@
+# Production Compose configuration for InsightBot (Task T20)
+# Supports Podman Compose and Docker Compose with bounded limits, restricted non-root users,
+# healthchecks, automated schema migration, and persistent named volumes.
+
+services:
+  mongo:
+    image: mongo:8.0
+    container_name: insightbot-mongo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=insightbot
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - insightbot_net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+
+  prefect:
+    image: prefecthq/prefect:3-python3.12
+    container_name: insightbot-prefect
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4200:4200"
+    environment:
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_UI_API_URL=http://127.0.0.1:4200/api
+    volumes:
+      - prefect_data:/root/.prefect
+    networks:
+      - insightbot_net
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1536M
+
+  migrator:
+    build:
+      context: ..
+      dockerfile: Dockerfile.api
+    container_name: insightbot-migrator
+    restart: "no"
+    command: ["insightbot", "db", "migrate", "--apply"]
+    environment:
+      - INSIGHTBOT_MONGO_URI=mongodb://mongo:27017
+      - INSIGHTBOT_MONGO_DB=insightbot
+      - INSIGHTBOT_ENV=production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - insightbot_net
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile.api
+    container_name: insightbot-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - INSIGHTBOT_HOST=0.0.0.0
+      - INSIGHTBOT_PORT=8000
+      - INSIGHTBOT_MONGO_URI=mongodb://mongo:27017
+      - INSIGHTBOT_MONGO_DB=insightbot
+      - PREFECT_API_URL=http://prefect:4200/api
+      - INSIGHTBOT_RAW_STORAGE_PATH=/app/data/raw
+      - INSIGHTBOT_EXPORT_STORAGE_PATH=/app/data/exports
+      - INSIGHTBOT_ENV=production
+      - INSIGHTBOT_STATIC_DIR=/app/apps/web/dist
+      - HF_HUB_OFFLINE=1
+    volumes:
+      - raw_data:/app/data/raw
+      - exports_data:/app/data/exports
+    depends_on:
+      mongo:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+      prefect:
+        condition: service_healthy
+    networks:
+      - insightbot_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+
+  worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile.worker
+    container_name: insightbot-worker
+    restart: unless-stopped
+    environment:
+      - INSIGHTBOT_MONGO_URI=mongodb://mongo:27017
+      - INSIGHTBOT_MONGO_DB=insightbot
+      - PREFECT_API_URL=http://prefect:4200/api
+      - INSIGHTBOT_RAW_STORAGE_PATH=/app/data/raw
+      - INSIGHTBOT_ENV=production
+      - HF_HUB_OFFLINE=1
+    volumes:
+      - raw_data:/app/data/raw
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - insightbot_net
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 2048M
+
+volumes:
+  mongo_data:
+    name: insightbot_mongo_data
+  prefect_data:
+    name: insightbot_prefect_data
+  raw_data:
+    name: insightbot_raw_data
+  exports_data:
+    name: insightbot_exports_data
+
+networks:
+  insightbot_net:
+    name: insightbot_network
+    driver: bridge

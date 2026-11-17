@@ -85,3 +85,34 @@ def get_capabilities() -> dict[str, Any]:
         "assistant_enabled": True,
         "max_page_limit": 100,
     }
+
+
+# Optional SPA Static Files Serving (Section 20: Same-Origin Production Packaging)
+if settings.static_dir and settings.static_dir.is_dir():
+    index_file = settings.static_dir / "index.html"
+    assets_dir = settings.static_dir / "assets"
+    if assets_dir.is_dir():
+        from starlette.staticfiles import StaticFiles
+
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    if index_file.is_file():
+        from fastapi import HTTPException
+        from starlette.responses import FileResponse
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def serve_spa(full_path: str) -> FileResponse:
+            """Serve single-page application with fallback for client-side routing."""
+            if (
+                full_path.startswith("api")
+                or full_path.startswith("docs")
+                or full_path.startswith("redoc")
+                or full_path == "openapi.json"
+            ):
+                raise HTTPException(status_code=404, detail="Not Found")
+
+            if settings.static_dir:
+                target_file = settings.static_dir / full_path
+                if target_file.is_file() and not full_path.endswith(".html"):
+                    return FileResponse(str(target_file))
+            return FileResponse(str(index_file))
